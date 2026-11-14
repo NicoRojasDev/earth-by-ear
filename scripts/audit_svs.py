@@ -26,7 +26,7 @@ SKIP_FOLDERS = ("pacific", "robinson", "1920x1080")
 SKIP_EXT = (".exr", ".tif", ".tiff", ".mp4", ".webm", ".mov", ".hwshow", ".zip")
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "data" / "interim" / "audit"
-FRAME_RE = re.compile(r'href="([^"?]+?\.(?:png|jpg|jpeg|tif|tiff|exr))"', re.IGNORECASE)
+FRAME_RE = re.compile(r'href="?([^"\s>?]+?\.(?:png|jpg|jpeg|tif|tiff|exr))"?[\s>]', re.IGNORECASE)
 
 session = requests.Session()
 session.headers["User-Agent"] = "EarthByEar-SpaceApps2026-audit"
@@ -112,7 +112,7 @@ def audit_frames(url, folder):
         info["error"] = str(exc)
         return info
     (folder / f"listing_{name}.html").write_text(html, encoding="utf-8")
-    files = sorted({href.rsplit("/", 1)[-1] for href in FRAME_RE.findall(html)})
+    files = sorted({href.rsplit("/", 1)[-1] for href in FRAME_RE.findall(html) if "://" not in href})
     info["count"] = len(files)
     info["first"] = files[:3]
     info["last"] = files[-3:]
@@ -122,7 +122,7 @@ def audit_frames(url, folder):
     for fname in ([files[0], files[-1]] if files else []):
         if fname.lower().endswith(SKIP_EXT):
             continue
-        dest = folder / "frames" / name / fname
+        dest = folder / "frames" / name / re.sub(r'[<>:"|?*]', "-", fname)  # Windows-safe name
         if download(urljoin(url if url.endswith("/") else url + "/", fname), dest):
             info["downloaded"].append({"name": fname, "bytes": dest.stat().st_size, "shape": shape_of(dest)})
     return info

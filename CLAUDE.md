@@ -222,7 +222,7 @@ Qué es Earth by Ear, cómo se traduce cada dato en sonido, de dónde salen los 
 - [x] Prototipo de los incendios con datos simulados.
 - [x] P0 · Repo creado y estructura armada. Repo: https://github.com/NicoRojasDev/earth-by-ear · App: https://nicorojasdev.github.io/earth-by-ear/ · Carpeta local: `C:\Users\juans\Documents\earth-by-ear` (fuera de OneDrive a propósito).
 - [x] P1 · Clave de FIRMS verificada y fechas disponibles (`scripts/check_firms.py`, sábado 13:04).
-- [ ] P2 · Auditoría de datos de los 5 fenómenos.
+- [x] P2 · Auditoría de datos de los 5 fenómenos (`pitch/data-audit.md`): los 5 entran. MVP = `fire` + `ocean` + `rain`; después `air` y `smoke`.
 - [ ] P3 · Esqueleto web (archivos, pestañas, bilingüe EN/ES, configuración).
 - [ ] P4 · Pipeline genérico con datos reales de `fire` y `ocean`.
 - [ ] P5 · Pestaña de fenómeno genérica (imagen real + Listen + Explore).
@@ -275,7 +275,13 @@ Qué es Earth by Ear, cómo se traduce cada dato en sonido, de dónde salen los 
 - **Imagen fija más reciente:** `VIIRS_fires_latest.png` (4096×2048, 7,1 MB).
 - **Créditos:** "NASA's Scientific Visualization Studio". Visualizador: Trent L. Schindler (USRA). Científico: Doug C. Morton (NASA/GSFC). Datos: Fire Pixels [Suomi NPP: VIIRS] y Blue Marble: Next Generation.
 
-**Decisiones abiertas (las resuelve el P2):**
+**Decisiones del P2 (resueltas el sábado 13:15; detalle en `pitch/data-audit.md`):**
+- La versión principal **no es un mapa plano** (bordes curvos, tipo Robinson): **se usa solo la equirectangular** `fires_frp_VIIRS_eq_nl_2048p30.mp4` para valores e imagen.
+- Ahora **las dos versiones tienen 900 fotogramas**: la fecha del fotograma *i* se lee en el fotograma *i* del video principal (lo hace el P4).
+- Barra de colores: FRP **0,0 a 8,0 MW**, rojo oscuro → dorado → amarillo → blanco.
+- **Riesgo:** Suomi NPP dejó de mandar datos el 02/11/2026 y la imagen del 13/11 no tiene focos. Usar fotogramas hasta fines de octubre y decirlo en las limitaciones.
+
+**Decisiones abiertas originales (ya resueltas arriba):**
 1. **Las dos versiones tienen distinta cantidad de fotogramas (824 contra 901):** no se pueden emparejar 1 a 1. **Plan preferido:** usar **solo la versión principal**, tapando la fecha y la barra de colores, **si** es el mismo mapa plano. Si no lo es, usar la equirectangular y estimar las fechas.
 2. **Fecha de cada fotograma:** leer la fecha del primer y del último fotograma de la versión principal y calcular cuántos días hay por fotograma.
 3. **Qué significa cada color:** la página no lo explica. Calibrar con la barra de colores de la versión principal.
