@@ -40,8 +40,9 @@
             <figcaption class="sr-only" data-el="alt"></figcaption>
           </figure>
           <div class="blind-bar">
-            <button type="button" class="btn big" data-el="bPlay"><span aria-hidden="true" data-el="bPlayIcon">▶</span> <span data-el="bPlayLabel"></span></button>
             <button type="button" class="btn big" data-el="bWhere"><span aria-hidden="true">🔊</span> <span data-i18n="blind.where"></span></button>
+            <button type="button" class="btn big" data-el="bDetails"><span aria-hidden="true">ℹ️</span> <span data-i18n="details.btn"></span></button>
+            <button type="button" class="btn big wide" data-el="bPlay"><span aria-hidden="true" data-el="bPlayIcon">▶</span> <span data-el="bPlayLabel"></span></button>
           </div>
           <div class="timeline" role="group" data-i18n-aria="common.timeline">
             <button type="button" class="btn icon" data-el="prev" data-i18n-aria="common.prev"><span aria-hidden="true">⏮</span></button>
@@ -105,6 +106,7 @@
     el.mExplore.addEventListener('click', () => this.setMode('explore'));
     el.bPlay.addEventListener('click', () => { this.playing ? this.pause() : this.play(); });
     el.bWhere.addEventListener('click', () => this.describe());
+    el.bDetails.addEventListener('click', () => this.details());
     this.panel.addEventListener('keydown', e => this.onKey(e));
   };
 
@@ -120,6 +122,8 @@
       case 'Enter':
         if (isButton) return;
         e.preventDefault(); this.describe(); break;
+      case 'd': case 'D':
+        e.preventDefault(); this.details(); break;
       case 'm': case 'M':
         e.preventDefault(); this.setMode(this.mode === 'listen' ? 'explore' : 'listen'); break;
       case 'ArrowLeft':
@@ -406,6 +410,64 @@
   P.isDry = function () {
     const d = this.cfg.dryBelow, n = this.near;
     return d !== undefined && n && n.value !== null && n.value !== undefined && n.value < d;
+  };
+
+  // ---------- Details (blind mode button and D key): everything about the point, in words ----------
+  const UNIT_WORDS = { '°C': 'unit.c', 'mm/h': 'unit.mmh', 'µg/m³': 'unit.ugm3' };
+
+  P.spokenValue = function (v, signed) {
+    const units = this.ds.units, d = this.cfg.decimals || 0;
+    if (units === 'relative') return EBE.i18n.num(100 * v, 0) + ' ' + t('unit.percent');
+    const digits = this.ds.scale === 'log' && Math.abs(v) < 1 ? Math.max(d, 1) : d;
+    return (signed && v > 0 ? '+' : '') + EBE.i18n.num(v, digits) + ' ' + (UNIT_WORDS[units] ? t(UNIT_WORDS[units]) : units);
+  };
+
+  P.detailsText = function () {
+    if (!this.ds) return '';
+    this.updateNear();
+    const c = this.cursor, fr = this.frame(), ds = this.ds, s = fr.summary, near = this.near;
+    const num = (x, d) => EBE.i18n.num(x, d || 0);
+    const out = [t('details.head', { topic: t('tab.' + this.id), date: EBE.i18n.date(fr.t) })];
+    // Where: continent or ocean, named area, coordinates in words.
+    const region = t('region.' + EBE.geo.regionKey(c.lon, c.lat));
+    const place = noCoords(EBE.geo.placeName(c.lon, c.lat));
+    const same = [t('common.near', { place: region }), t('common.inSea', { place: region })].map(x => x.toLowerCase());
+    const where = place && !same.includes(place.toLowerCase()) ? region + ', ' + place : region;
+    out.push(t('details.where', { where }));
+    out.push(t('details.coords', {
+      lat: t(c.lat >= 0 ? 'details.north' : 'details.south', { n: num(Math.abs(c.lat)) }),
+      lon: t(c.lon >= 0 ? 'details.east' : 'details.west', { n: num(Math.abs(c.lon)) })
+    }));
+    const level = t(levelKey(fr.rank));
+    if (ds.type === 'points') {
+      const R = EBE.config.sound.exploreRadiusKm;
+      if (!near.best) out.push(t('details.fireNone'));
+      else {
+        const pct = num(100 * near.best[2]);
+        out.push(near.d < 40
+          ? t('details.fireOn', { pct, count: num(near.list.length), km: R })
+          : t('details.fireNear', { count: num(near.list.length), km: R, dist: num(near.d), dir: EBE.geo.dir8(near.b), pct }));
+      }
+      out.push(t('details.fireGlobal', { count: num(s.count), level }));
+    } else {
+      if (near.value === null) out.push(t('common.noData') + '.');
+      else if (this.isDry()) out.push(t(this.id + '.none') + '.');
+      else {
+        if (this.cfg.signed) out.push(t(near.value >= 0 ? 'details.above' : 'details.below', { value: this.spokenValue(Math.abs(near.value)) }));
+        else out.push(t('details.value', { value: this.spokenValue(near.value) }));
+        const i = near.intensity;
+        out.push(t('details.intensity', { pct: num(100 * i), level: t(i < 1 / 3 ? 'details.lvl.low' : i < 2 / 3 ? 'details.lvl.medium' : 'details.lvl.high') }));
+      }
+      if (s.mean !== undefined) out.push(t('details.global', { value: this.spokenValue(s.mean, this.cfg.signed), level }));
+    }
+    return out.join(' ');
+  };
+
+  P.details = function () {
+    const text = this.detailsText();
+    if (!text) return;
+    EBE.a11y.announce(text);
+    if (!EBE.a11y.readAloud()) EBE.a11y.speak(text);
   };
 
   P.describe = function () {

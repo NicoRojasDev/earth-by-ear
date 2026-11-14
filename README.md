@@ -10,7 +10,7 @@ Built for the **NASA International Space Apps Challenge 2026**, challenge *The E
 
 ## What it does
 
-- **Two modes, chosen on the welcome screen.** *Standard mode* for people who see the screen, and a simple *blind or low-vision mode*: sound and voice start on their own, the screen shows only a big topic switcher, a big map and two big buttons (listen over time, where am I). Sliding a finger says the continent or ocean under it (the Americas split into North, Central and South America); lifting it says the value.
+- **Two modes, chosen on the welcome screen.** *Standard mode* for people who see the screen, and a simple *blind or low-vision mode*: sound and voice start on their own, the screen shows only a big topic switcher, a big map and three big buttons: *Where am I?*, *Details* (date, place, coordinates in words, value with its units, intensity and the world average) and *Listen over time*. Sliding a finger says the continent or ocean under it (the Americas split into North, Central and South America); lifting it says the value.
 - **Five phenomena, five instruments.** Each tab shows the real EIC frame and plays sound computed from its values: fires (crackling), ocean heat (cello-like drone), rain and snow (drops), air temperature (warm pad and whistle) and air quality (muffled rumble).
 - **Listen:** the animation plays and you hear each moment. Higher values sound denser, brighter and louder; a tense chord comes in when a moment is above the period average.
 - **Explore:** slide a finger (or use the arrow keys) over the map and hear the value at each place. For fires, a sonar speeds up as you get closer to the nearest fire.

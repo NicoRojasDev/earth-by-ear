@@ -182,4 +182,5 @@ body.blind .ph-grid { display: block; }
 body.blind .map { aspect-ratio: auto; height: 56vh; height: 56dvh; }
 body.blind .blind-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
 body.blind .blind-bar .btn { min-height: 76px; font-size: 1.2rem; }
+body.blind .blind-bar .btn.wide { grid-column: 1 / -1; }
 body.blind .readout { font-size: 1.15rem; min-height: 1.5em; }
