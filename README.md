@@ -40,9 +40,17 @@ NASA FIRMS (https://firms.modaps.eosdis.nasa.gov/) is our reference for cross-ch
 
 Credit: NASA's Scientific Visualization Studio.
 
+## Validation
+
+- **The fire data is real:** the fire spots we read from the SVS 5113 frames rise and fall with NASA FIRMS VIIRS detections, with a rank correlation of 0.67–0.94 in five regions and 0.93 overall (60 five-day windows in 2026).
+- **The mix is fair:** a loudness meter on the app's output keeps the five instruments within about 4 dB of each other, on headphones and on phone speakers.
+- **People can hear it:** results of the listening game are being collected.
+
+Details, chart and data are in [`pitch/validation.md`](pitch/validation.md).
+
 ## Limitations
 
-Values are read from image colors, not from calibrated measurements, so they are approximations; values beyond a colorbar are shown at its limit. The 2-degree grid averages out local detail. Fire intensity is relative (colorbar color plus cluster size), and fire data stops at the end of October 2026 because the satellite feed behind the visualization stopped in early November.
+Values are read from image colors, not from calibrated measurements, so they are approximations; values beyond a colorbar are shown at its limit. The 2-degree grid averages out local detail. Fire intensity is relative (colorbar color plus cluster size); where fires are very dense, nearby fires merge into one cluster, so the number of crackles under-represents those regions. Fire data stops at the end of October 2026 because the satellite feed behind the visualization stopped in early November.
 
 ## AI disclosure
 

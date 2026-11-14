@@ -178,7 +178,7 @@
       'about.dataTitle': 'Data and credits',
       'about.data': 'All visualizations: NASA\'s Scientific Visualization Studio (svs.gsfc.nasa.gov), from the Earth Information Center collection.',
       'about.limitsTitle': 'Honest limitations',
-      'about.limits': 'Values are read from image colors, not from calibrated measurements, so they are approximations; values beyond a colorbar are shown at its limit. A 2° grid averages out local detail. Averages are weighted by area. Each phenomenon covers its own period, from days to years. Fire intensity is relative (colorbar color plus cluster size), and fire data stops at the end of October 2026 because the satellite feed behind the visualization stopped in early November.',
+      'about.limits': 'Values are read from image colors, not from calibrated measurements, so they are approximations; values beyond a colorbar are shown at its limit. A 2° grid averages out local detail. Averages are weighted by area. Each phenomenon covers its own period, from days to years. Fire intensity is relative (colorbar color plus cluster size). Checked against NASA FIRMS, our fire spots rise and fall with the official detections (rank correlation 0.93 in 2026), but where fires are very dense they merge into one cluster, so those regions get fewer crackles than they deserve. Fire data stops at the end of October 2026 because the satellite feed behind the visualization stopped in early November.',
       'about.aiTitle': 'AI disclosure',
       'about.ai': 'This project was built with the assistance of Claude (Anthropic) for writing code. All sounds are synthesized live in your browser by our code; no AI-generated audio, images or video are used.',
       'about.teamTitle': 'Team',
@@ -361,7 +361,7 @@
       'about.dataTitle': 'Datos y créditos',
       'about.data': 'Todas las visualizaciones: NASA\'s Scientific Visualization Studio (svs.gsfc.nasa.gov), de la colección del Earth Information Center.',
       'about.limitsTitle': 'Limitaciones honestas',
-      'about.limits': 'Los valores se leen de los colores de la imagen, no de mediciones calibradas, así que son aproximaciones; los valores que superan la barra de colores se muestran en su límite. La grilla de 2° promedia los detalles locales. Los promedios se ponderan por área. Cada fenómeno cubre su propio período, de días a años. La intensidad de los incendios es relativa (color de la barra más tamaño del foco), y los datos de incendios llegan hasta fines de octubre de 2026 porque la señal del satélite de esa visualización se cortó a principios de noviembre.',
+      'about.limits': 'Los valores se leen de los colores de la imagen, no de mediciones calibradas, así que son aproximaciones; los valores que superan la barra de colores se muestran en su límite. La grilla de 2° promedia los detalles locales. Los promedios se ponderan por área. Cada fenómeno cubre su propio período, de días a años. La intensidad de los incendios es relativa (color de la barra más tamaño del foco). Comparados con NASA FIRMS, nuestros focos suben y bajan con las detecciones oficiales (correlación de rangos 0,93 en 2026), pero donde hay muchísimos focos se juntan en una sola mancha, así que esas regiones suenan con menos chasquidos de los que les corresponden. Los datos de incendios llegan hasta fines de octubre de 2026 porque la señal del satélite de esa visualización se cortó a principios de noviembre.',
       'about.aiTitle': 'Uso de IA',
       'about.ai': 'Este proyecto se hizo con la ayuda de Claude (Anthropic) para escribir el código. Todos los sonidos los genera en vivo nuestro código en tu navegador; no usamos audio, imágenes ni video generados con IA.',
       'about.teamTitle': 'Equipo',
@@ -386,6 +386,7 @@
       if (s === undefined) return key;
     }
     if (params) s = s.replace(/\{(\w+)\}/g, (m, k) => (params[k] !== undefined ? params[k] : m));
+    if (lang === 'es') s = s.replace(/(^|[\s(])de el(?=\s)/g, '$1del').replace(/(^|[\s(])a el(?=\s)/g, '$1al');   // Spanish contractions
     return s;
   }
 

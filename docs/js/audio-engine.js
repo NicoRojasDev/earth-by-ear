@@ -37,9 +37,9 @@
     const nd = noiseBuffer.getChannelData(0);
     for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
     for (let k = 0; k < 6; k++) {
-      const len = Math.floor(ctx.sampleRate * (0.005 + 0.028 * k / 5));
+      const len = Math.floor(ctx.sampleRate * (0.006 + 0.034 * k / 5));
       const b = ctx.createBuffer(1, len, ctx.sampleRate), d = b.getChannelData(0);
-      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.exp(-i / (len * 0.2));
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.exp(-i / (len * 0.3));
       grainBuffers.push(b);
     }
 

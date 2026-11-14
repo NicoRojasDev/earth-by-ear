@@ -7,7 +7,7 @@ For every fire frame used by the web (60 frames, one every 5 days) and a few reg
 then reports Pearson and Spearman correlations. FIRMS pixels are 375 m and our spots are clusters
 of ~10 km pixels, so the numbers differ in scale; what matters is whether they rise and fall together.
 
-Usage (Windows): .venv/Scripts/python scripts/validate_firms.py
+Usage (Windows): .venv/Scripts/python scripts/validate_firms.py [--summary-only]
 Writes data/interim/firms/validation.csv and data/interim/firms/validation_summary.txt (not in git).
 """
 import datetime as dt
@@ -57,6 +57,8 @@ def firms_count(key, src, box, start):
 
 
 def main():
+    if "--summary-only" in sys.argv:
+        return summarize(pd.read_csv(OUT / "validation.csv"))
     key = (dotenv_values(ROOT / ".env").get("FIRMS_MAP_KEY") or "").strip()
     if not key:
         print("FIRMS_MAP_KEY is empty in .env")
@@ -90,6 +92,17 @@ def main():
 
     df = pd.DataFrame(rows)
     df.to_csv(OUT / "validation.csv", index=False)
+    return summarize(df)
+
+
+def corr(x, y, method="pearson"):
+    """Pearson r, or Spearman rho as the Pearson r of the ranks (no scipy needed)."""
+    if method == "spearman":
+        x, y = x.rank(), y.rank()
+    return float(np.corrcoef(x, y)[0, 1])
+
+
+def summarize(df):
     ok = df.dropna(subset=["firms_detections"])
     lines = [f"Frames: {ok['date'].nunique()} (5-day windows, {ok['date'].min()} .. {ok['date'].max()})",
              f"Regions: {', '.join(REGIONS)}", ""]
@@ -97,15 +110,14 @@ def main():
         if len(g) < 3 or g["svs_spots"].std() == 0 or g["firms_detections"].std() == 0:
             lines.append(f"{name}: not enough variation")
             continue
-        pear = g["svs_spots"].corr(g["firms_detections"], method="pearson")
-        spear = g["svs_spots"].corr(g["firms_detections"], method="spearman")
-        lines.append(f"{name}: n={len(g)}  Pearson r={pear:.2f}  Spearman rho={spear:.2f}  "
-                     f"(our spots mean {g['svs_spots'].mean():.0f}, FIRMS mean {g['firms_detections'].mean():.0f})")
+        x, y = g["svs_spots"].astype(float), g["firms_detections"].astype(float)
+        lines.append(f"{name}: n={len(g)}  Pearson r={corr(x, y):.2f}  Spearman rho={corr(x, y, 'spearman'):.2f}  "
+                     f"log-Pearson={corr(np.log1p(x), np.log1p(y)):.2f}  "
+                     f"(our spots mean {x.mean():.0f}, FIRMS mean {y.mean():.0f})")
     text = "\n".join(lines)
     (OUT / "validation_summary.txt").write_text(text, encoding="utf-8")
     print("\n" + text)
     return 0
-
 
 if __name__ == "__main__":
     sys.exit(main())

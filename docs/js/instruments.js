@@ -55,7 +55,7 @@
       },
       setBed({ level, bright, pan }) {
         if (!shell) return; const t = shell.ctx.currentTime;
-        glide(shell.gain.gain, 0.03 * level, t);
+        glide(shell.gain.gain, 0.2 * level, t);
         glide(shell.filter.frequency, 250 + 1400 * bright, t);
         if (shell.panner) glide(shell.panner.pan, clamp(pan || 0, -1, 1), t);
       },
@@ -66,7 +66,7 @@
         const src = ctx.createBufferSource(); src.buffer = grains[Math.floor(Math.random() * grains.length)];
         const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 0.9;
         bp.frequency.value = (700 + 4200 * intensity) * (0.75 + 0.5 * Math.random());
-        const g = ctx.createGain(); g.gain.value = 0.06 + 0.26 * intensity;
+        const g = ctx.createGain(); g.gain.value = 0.22 + 0.9 * intensity;
         src.connect(bp); bp.connect(g); A().out(g, pan);
         src.start(t); A().trackVoice(src, t + 0.05);
         return true;
@@ -96,7 +96,7 @@
         if (!shell) return; const t = shell.ctx.currentTime;
         const f = A().penta(55, 2 + Math.round(clamp(pitch, 0, 1) * 9));
         oscs.forEach(o => glide(o.frequency, f * o._mul, t));
-        glide(shell.gain.gain, 0.02 + 0.13 * level, t);
+        glide(shell.gain.gain, 0.016 + 0.105 * level, t);
         glide(shell.filter.frequency, 220 + 1800 * bright, t);
         glide(lfo.frequency, 0.4 + 6 * level, t);       // denser = faster bowing tremolo
         glide(lfoGain.gain, 0.1 + 0.3 * level, t);
@@ -108,7 +108,7 @@
         const f = A().penta(110, Math.round(clamp(pitch, 0, 1) * 10));
         const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f;
         const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 400 + 1600 * intensity;
-        const g = ctx.createGain(); env(g, t, 0.05 + 0.12 * intensity, 0.12, 1.1);
+        const g = ctx.createGain(); env(g, t, 0.04 + 0.1 * intensity, 0.12, 1.1);
         o.connect(lp); lp.connect(g); A().out(g, pan);
         o.start(t); o.stop(t + 1.4); A().trackVoice(o, t + 1.4);
         return true;
@@ -128,7 +128,7 @@
       },
       setBed({ level, bright, pan }) {
         if (!shell) return; const t = shell.ctx.currentTime;
-        glide(shell.gain.gain, 0.05 * level, t);
+        glide(shell.gain.gain, 0.065 * level, t);
         glide(shell.filter.frequency, 2500 + 9000 * bright, t);
         if (shell.panner) glide(shell.panner.pan, clamp(pan || 0, -1, 1), t);
       },
@@ -138,7 +138,7 @@
         const f = A().penta(523.25, Math.round(clamp(pitch, 0, 1) * 9));
         const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(f * 1.06, t);
         o.frequency.exponentialRampToValueAtTime(f, t + 0.03);
-        const g = ctx.createGain(); env(g, t, 0.04 + 0.16 * intensity, 0.003, 0.16 + 0.2 * intensity);
+        const g = ctx.createGain(); env(g, t, 0.05 + 0.2 * intensity, 0.003, 0.16 + 0.2 * intensity);
         o.connect(g); A().out(g, pan);
         o.start(t); o.stop(t + 0.5); A().trackVoice(o, t + 0.5);
         return true;
@@ -197,7 +197,7 @@
     return {
       startBed() {
         if (shell) return;
-        shell = makeBedShell('lowpass', 200);
+        shell = makeBedShell('lowpass', 300); shell.filter.Q.value = 2.5;   // resonant: audible on phone speakers
         const ctx = shell.ctx;
         const amNode = ctx.createGain(); amNode.gain.value = 1; amNode.connect(shell.filter);
         const n = noiseSource(ctx); n.connect(amNode); n.start(); shell.sources.push(n);
@@ -209,8 +209,8 @@
       setBed({ level, bright, pan, pitch }) {
         if (!shell) return; const t = shell.ctx.currentTime;
         glide(sub.frequency, A().penta(41.2, Math.round(clamp(pitch, 0, 1) * 7)), t);
-        glide(shell.gain.gain, 0.06 + 0.35 * level, t);
-        glide(shell.filter.frequency, 110 + 520 * bright, t);
+        glide(shell.gain.gain, 0.04 + 0.24 * level, t);
+        glide(shell.filter.frequency, 260 + 900 * bright, t);
         glide(am.frequency, 0.3 + 4 * level, t);
         glide(amGain.gain, 0.15 + 0.3 * level, t);
         if (shell.panner) glide(shell.panner.pan, clamp(pan || 0, -1, 1), t);
@@ -219,10 +219,11 @@
       hit(t, { intensity, pan, pitch }) {
         const ctx = A().ctx(); if (!A().allowEvent()) return false;
         const f = 55 + 50 * clamp(pitch, 0, 1);
-        const o = ctx.createOscillator(); o.type = 'sine';
+        const o = ctx.createOscillator(); o.type = 'sawtooth';   // harmonics let small speakers play the thud
         o.frequency.setValueAtTime(f, t); o.frequency.exponentialRampToValueAtTime(f * 0.6, t + 0.3);
-        const g = ctx.createGain(); env(g, t, 0.1 + 0.25 * intensity, 0.01, 0.35);
-        o.connect(g); A().out(g, pan);
+        const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 500 + 400 * intensity;
+        const g = ctx.createGain(); env(g, t, 0.08 + 0.2 * intensity, 0.01, 0.35);
+        o.connect(lp); lp.connect(g); A().out(g, pan);
         o.start(t); o.stop(t + 0.5); A().trackVoice(o, t + 0.5);
         return true;
       }

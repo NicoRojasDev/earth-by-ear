@@ -1,0 +1,50 @@
+1
+00:00:00,000 --> 00:00:02,000
+We're [TEAM NAME] from
+Santiago del Estero, Argentina.
+
+2
+00:00:02,000 --> 00:00:04,000
+Challenge:
+The Earth Information Jukebox.
+
+3
+00:00:04,000 --> 00:00:06,500
+NASA's Earth visuals
+are made for the eyes.
+
+4
+00:00:06,500 --> 00:00:09,000
+What if you can't see them?
+
+5
+00:00:09,000 --> 00:00:12,500
+[sonar beeps speed up as a finger
+moves toward the fires]
+
+6
+00:00:12,500 --> 00:00:15,500
+Earth by Ear turns them into
+live sound you can touch and explore.
+
+7
+00:00:15,500 --> 00:00:19,000
+[fire crackling · deep ocean drone ·
+rain drops]
+
+8
+00:00:19,000 --> 00:00:22,000
+Real frames from NASA's
+Earth Information Center,
+sonified live in the browser.
+
+9
+00:00:22,000 --> 00:00:25,000
+[X]% of players recognized
+each phenomenon by ear.
+
+10
+00:00:25,000 --> 00:00:29,000
+Climate data for everyone,
+in English and Spanish.
+nicorojasdev.github.io/earth-by-ear
