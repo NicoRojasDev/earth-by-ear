@@ -30,6 +30,7 @@
 - Cambios **chicos y verificables**. Al terminar cada tarea, decí cómo probarla.
 - **Preguntá antes de:** agregar dependencias, cambiar la arquitectura (sección 7), borrar archivos o cambiar el alcance (sección 5).
 - **El sistema es Windows** (verificado en la notebook del operador: Windows x64). No dependas de activar el entorno virtual: llamá directo a `.venv/Scripts/python`.
+- **Cómo operamos (desde el sábado 12:30):** Claude trabaja desde el chat (Project "nasa spaceapp"), sin Claude Code. Escribe los archivos directo en la carpeta local y ejecuta en la notebook los scripts de `scripts/windows/` (doble clic desde el Explorador). Cada script deja su registro en `data/interim/logs/`, que Claude lee. `_paths.bat` pone Git, GitHub CLI y Python en el PATH. Para guardar y subir: `05-save.bat` (usa `data/interim/commit-msg.txt`). Instalado: Git 2.56, Python 3.12.10, GitHub CLI 2.104 (sesión de GitHub: NicoRojasDev). Las descargas de NASA se hacen desde la notebook (la red de Claude no llega a NASA), pero Claude puede leer las fichas de SVS por la web.
 
 ### Definición de "terminado" (para cualquier tarea)
 1. Corre sin errores: los scripts de Python terminan bien y la web no muestra errores en la consola del navegador.
@@ -219,7 +220,7 @@ Qué es Earth by Ear, cómo se traduce cada dato en sonido, de dónde salen los 
 
 - [x] Idea, nombre y alcance definidos (este archivo).
 - [x] Prototipo de los incendios con datos simulados.
-- [ ] P0 · Repo creado y estructura armada.
+- [x] P0 · Repo creado y estructura armada. Repo: https://github.com/NicoRojasDev/earth-by-ear · App: https://nicorojasdev.github.io/earth-by-ear/ · Carpeta local: `C:\Users\juans\Documents\earth-by-ear` (fuera de OneDrive a propósito).
 - [ ] P1 · Clave de FIRMS verificada y fechas disponibles.
 - [ ] P2 · Auditoría de datos de los 5 fenómenos.
 - [ ] P3 · Esqueleto web (archivos, pestañas, bilingüe EN/ES, configuración).
