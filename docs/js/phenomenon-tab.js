@@ -6,6 +6,9 @@
   const t = (k, p) => EBE.i18n.t(k, p);
   const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
   const noCoords = s => s.replace(/\s*\([^)]*°[^)]*\)/g, '');   // spoken text: no coordinates
+  // Spoken text in blind mode: no coordinates, units in words, no symbols.
+  const speakable = s => noCoords(s).replace(/°C/g, t('unit.c')).replace(/mm\/h/g, t('unit.mmh'))
+    .replace(/µg\/m³/g, t('unit.ugm3')).replace(/(\d)\s*%/g, '$1 ' + t('unit.percent')).replace(/\s·\s/g, ', ');
   const smooth = (a, b, x) => { const u = clamp((x - a) / (b - a), 0, 1); return u * u * (3 - 2 * u); };
 
   function levelKey(rank) {
@@ -357,7 +360,7 @@
     clearTimeout(this.regionTimer); this.pendingRegion = null;
     this.lastRegion = EBE.geo.regionKey(this.cursor.lon, this.cursor.lat);
     const region = t('region.' + this.lastRegion);
-    const text = noCoords(this.readoutText());
+    const text = speakable(this.readoutText());
     EBE.a11y.speak(text.includes(region) ? text : region + '. ' + text);
   };
 
@@ -473,7 +476,7 @@
   P.describe = function () {
     if (!this.ds) return;
     const raw = this.mode === 'explore' ? this.readoutText() : this.describeText();
-    const text = EBE.a11y.isBlind() ? noCoords(raw) : raw;
+    const text = EBE.a11y.isBlind() ? speakable(raw) : raw;
     EBE.a11y.announce(text);
     if (!EBE.a11y.readAloud()) EBE.a11y.speak(text);
   };

@@ -184,3 +184,16 @@ body.blind .blind-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px
 body.blind .blind-bar .btn { min-height: 76px; font-size: 1.2rem; }
 body.blind .blind-bar .btn.wide { grid-column: 1 / -1; }
 body.blind .readout { font-size: 1.15rem; min-height: 1.5em; }
+
+/* Blind mode instructions screen */
+#btn-help { display: none; }
+body.blind #btn-help { display: inline-flex; align-items: center; gap: 6px; }
+body.helpopen .topicbar, body.helpopen #panels { display: none !important; }
+.blind-help { display: flex; flex-direction: column; gap: 12px; padding: 4px 0 16px; }
+.blind-help[hidden] { display: none; }
+.blind-help h2 { font-size: 1.5rem; margin: 4px 0 0; }
+.blind-help h2:focus { outline: none; }
+.bh-steps { margin: 0; padding-left: 1.4em; display: grid; gap: 10px; font-size: 1.15rem; line-height: 1.45; }
+#bh-replay { align-self: flex-start; min-height: 52px; }
+.bh-start { position: sticky; bottom: 10px; z-index: 6; min-height: 140px; border-color: var(--accent-2); background: #241a08;
+  box-shadow: 0 -16px 24px var(--bg); }   /* always on screen, where the voice says it is */

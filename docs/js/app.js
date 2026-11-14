@@ -117,6 +117,37 @@
     sayTopic(tab);
   }
 
+  function welcomeText() {
+    const stacked = getComputedStyle($('.welcome-choices')).gridTemplateColumns.split(' ').length < 2;
+    return t(stacked ? 'welcome.voiceStacked' : 'welcome.voiceSide');
+  }
+
+  // Blind mode instructions: a screen of its own, read aloud, with a big Start button.
+  function helpText() {
+    const steps = ['help.s1', 'help.s2', 'help.s3', 'help.s4', 'help.s5', 'help.s6'].map(k => t(k));
+    return [t('help.title') + '.'].concat(steps, t('help.end')).join(' ');
+  }
+
+  function showHelp() {
+    if (current) current.controller.deactivate();
+    document.body.classList.add('helpopen');
+    $('#blind-help').hidden = false;
+    $('#bh-title').focus();
+    EBE.a11y.speak(helpText());
+  }
+
+  function hideHelp() {
+    document.body.classList.remove('helpopen');
+    $('#blind-help').hidden = true;
+  }
+
+  function startBlind() {
+    hideHelp();
+    select(current.id, false);
+    $('#tb-name').focus();
+    sayTopic(current);
+  }
+
   function setVoice(on) {
     $('#btn-voice').setAttribute('aria-pressed', on ? 'true' : 'false');
     EBE.a11y.setReadAloud(on);
@@ -153,8 +184,8 @@
     updateModeButton(); updateSoundButton();
     select(current ? current.id : tabs[0].id, false);
     (blind ? $('#tb-name') : current.button).focus();
-    if (blind) EBE.a11y.speak(t('mode.blindIntro', { tab: t('tab.' + current.id) }));
-    else EBE.a11y.announce(t('mode.standardOn'));
+    if (blind) showHelp();
+    else { hideHelp(); EBE.a11y.announce(t('mode.standardOn')); }
   }
 
   function init() {
@@ -181,9 +212,18 @@
       if (on) EBE.a11y.speak(t('header.readAloud'));
     });
 
-    document.querySelectorAll('[data-lang]').forEach(b => b.addEventListener('click', () => EBE.i18n.setLang(b.dataset.lang)));
+    // Choosing a language is a tap, so the voice can start: on the welcome screen it explains the two modes,
+    // on the blind-mode instructions it reads them again, always in the language just chosen.
+    document.querySelectorAll('[data-lang]').forEach(b => b.addEventListener('click', () => {
+      EBE.i18n.setLang(b.dataset.lang);
+      if (document.body.classList.contains('choosing')) EBE.a11y.speak(welcomeText());
+      else if (!$('#blind-help').hidden) EBE.a11y.speak(helpText());
+    }));
     document.querySelectorAll('.choice-big[data-mode]').forEach(b => b.addEventListener('click', () => chooseMode(b.dataset.mode)));
     $('#btn-mode').addEventListener('click', showWelcome);
+    $('#btn-help').addEventListener('click', showHelp);
+    $('#bh-start').addEventListener('click', startBlind);
+    $('#bh-replay').addEventListener('click', () => EBE.a11y.speak(helpText()));
     $('#tb-prev').addEventListener('click', () => stepTopic(-1));
     $('#tb-next').addEventListener('click', () => stepTopic(1));
     EBE.i18n.onChange(() => {

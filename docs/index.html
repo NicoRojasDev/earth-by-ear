@@ -51,6 +51,9 @@
     <button type="button" id="btn-mode" class="btn">
       <span aria-hidden="true" data-mode-icon>👁</span> <span data-mode-label></span>
     </button>
+    <button type="button" id="btn-help" class="btn">
+      <span aria-hidden="true">❓</span> <span data-i18n="help.button"></span>
+    </button>
     <button type="button" id="btn-voice" class="btn" aria-pressed="false">
       <span aria-hidden="true">🗣</span> <span data-i18n="header.readAloud"></span>
     </button>
@@ -64,6 +67,31 @@
 </header>
 
 <main id="main" tabindex="-1" hidden>
+  <!-- Blind mode: instructions, shown (and read aloud) when the mode starts and from the Help button. -->
+  <section id="blind-help" class="blind-help" aria-labelledby="bh-title" hidden>
+    <h2 id="bh-title" tabindex="-1" data-i18n="help.title"></h2>
+    <ol class="bh-steps">
+      <li data-i18n="help.s1"></li>
+      <li data-i18n="help.s2"></li>
+      <li data-i18n="help.s3"></li>
+      <li data-i18n="help.s4"></li>
+      <li data-i18n="help.s5"></li>
+      <li data-i18n="help.s6"></li>
+    </ol>
+    <button type="button" class="btn" id="bh-replay"><span aria-hidden="true">🔊</span> <span data-i18n="help.replay"></span></button>
+    <div class="welcome-lang">
+      <span data-i18n="header.language"></span>
+      <div class="lang" role="group" data-i18n-aria="header.language">
+        <button type="button" class="btn" data-lang="en" lang="en" aria-label="EN, English">EN</button>
+        <button type="button" class="btn" data-lang="es" lang="es" aria-label="ES, Español">ES</button>
+      </div>
+    </div>
+    <button type="button" class="choice-big bh-start" id="bh-start">
+      <span class="ico" aria-hidden="true">▶</span>
+      <span class="ttl" data-i18n="help.start"></span>
+    </button>
+  </section>
+
   <!-- Blind mode: one big topic switcher instead of the tab list. -->
   <div class="topicbar" id="topicbar">
     <button type="button" class="btn" id="tb-prev" data-i18n-aria="blind.prevTopic"><span aria-hidden="true">◀</span></button>
