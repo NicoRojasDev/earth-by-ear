@@ -190,7 +190,7 @@ Si un fenómeno no está listo, su pestaña no se muestra (se controla desde la 
 ### 3.4 Minijuego (pestaña Game). Reemplaza a la prueba a ciegas
 
 - **10 rondas.** En cada una suena un clip de 3 segundos: un fenómeno al azar, en un fotograma y un lugar al azar, con una intensidad conocida.
-- **La intensidad se clasifica en Low / Medium / High** según los terciles de los valores de ese fenómeno.
+- **La intensidad se clasifica en Low / Medium / High** por **tercios de la escala de intensidad** (0–0,33–0,66–1). Cambio del P8: con terciles de los datos, en PM2.5 salía "alto" en pleno océano limpio (la mayor parte del planeta tiene valores bajos) y no se podía distinguir de oído.
 - **Dos respuestas por ronda:** **cuál fenómeno es** (botones con los fenómenos cargados) y **qué tan intenso está** (Low / Medium / High). Se puede repetir el clip hasta 2 veces.
 - **Se juega sin mirar:** el mapa no se muestra durante la ronda, y todo funciona con teclado y lector de pantalla.
 - **Resultados:** porcentaje de aciertos de fenómeno y de intensidad, **matriz de confusión** (qué fenómeno se confunde con cuál) y **valor p** de una binomial contra el azar (fenómeno: 1/k, donde k es la cantidad de fenómenos; intensidad: 1/3).
@@ -224,12 +224,12 @@ Qué es Earth by Ear, cómo se traduce cada dato en sonido, de dónde salen los 
 - [x] P1 · Clave de FIRMS verificada y fechas disponibles (`scripts/check_firms.py`, sábado 13:04).
 - [x] P2 · Auditoría de datos de los 5 fenómenos (`pitch/data-audit.md`): los 5 entran. MVP = `fire` + `ocean` + `rain`; después `air` y `smoke`.
 - [x] P3 · Esqueleto web (archivos, pestañas, bilingüe EN/ES, configuración). La pestaña de fenómeno ya es genérica (puntos y campos, Listen y Explore) y `fire` usa datos **simulados** en el formato final hasta el P4. Probado en Chrome sin interfaz: 0 errores de consola.
-- [ ] P4 · Pipeline genérico con datos reales de `fire` y `ocean`.
-- [ ] P5 · Pestaña de fenómeno genérica (imagen real + Listen + Explore).
-- [ ] P6 · Instrumentos y mezcla.
-- [ ] P7 · Tercer fenómeno (y cuarto y quinto si da el tiempo).
+- [x] P4 · Pipeline genérico con datos reales (`scripts/download_raw.py` + `scripts/build_data.py`, configuración en `scripts/phenomena.json`). Los **5 fenómenos** tienen datos reales: 60–62 fotogramas cada uno, archivos de 0,9 a 1,35 MB.
+- [x] P5 · Pestaña de fenómeno genérica (imagen real + Listen + Explore). Probada en Chrome sin interfaz con los datos reales: 0 errores de consola.
+- [ ] P6 · Instrumentos y mezcla. **Programado** (5 instrumentos, 3 señales de intensidad, fondo de alerta, limitador). **Falta que el equipo lo escuche** y diga qué ajustar: Claude no puede oír.
+- [x] P7 · Tercer, cuarto y quinto fenómeno (`rain`, `air`, `smoke`).
 - [ ] Publicación de control en GitHub Pages (sábado a la noche).
-- [ ] P8 · Minijuego.
+- [ ] P8 · Minijuego. **Programado y probado de punta a punta** (10 rondas, matriz de confusión, valor p, CSV). Falta que lo jueguen ~10 personas.
 - [ ] P9 · Audio Tour.
 - [ ] P10 · Repaso de accesibilidad, celulares y rendimiento.
 - [ ] P11 · Validación (resultados del juego y FIRMS).
@@ -280,6 +280,8 @@ Qué es Earth by Ear, cómo se traduce cada dato en sonido, de dónde salen los 
 - Ahora **las dos versiones tienen 900 fotogramas**: la fecha del fotograma *i* se lee en el fotograma *i* del video principal (lo hace el P4).
 - Barra de colores: FRP **0,0 a 8,0 MW**, rojo oscuro → dorado → amarillo → blanco.
 - **Riesgo:** Suomi NPP dejó de mandar datos el 02/11/2026 y la imagen del 13/11 no tiene focos. Usar fotogramas hasta fines de octubre y decirlo en las limitaciones.
+- **Fechas verificadas en el P4** (leídas en el video principal): fotograma 0 = 13/11/2024, fotograma 899 = 13/11/2026 (2 años; ~0,81 días por fotograma; el último fotograma tiene 0 focos). Usamos 60 fotogramas, uno cada 5 días, del 08/01/2026 al 30/10/2026.
+- **Lecciones del P4:** (1) `VIIRS_fires_latest.png` es de 16 bits: hay que pasarla a 8 bits antes de leer la barra; (2) los bordes de las barras de colores tienen contorno: se recortan 4 píxeles por lado; (3) en el mar, El Niño supera los +4 °C y se dibuja más oscuro que el final de la barra: se agregan copias más oscuras de los extremos (`extend_ends`); (4) las estadísticas se ponderan por área (coseno de la latitud): la temperatura media del planeta da 15,4 °C, que coincide con el valor real conocido.
 
 **Decisiones abiertas originales (ya resueltas arriba):**
 1. **Las dos versiones tienen distinta cantidad de fotogramas (824 contra 901):** no se pueden emparejar 1 a 1. **Plan preferido:** usar **solo la versión principal**, tapando la fecha y la barra de colores, **si** es el mismo mapa plano. Si no lo es, usar la equirectangular y estimar las fechas.
@@ -322,7 +324,7 @@ FIRMS da **los mismos focos que detecta el satélite, pero como tabla**. Lo enla
 3. **Guardar la imagen para mostrar:** cada fotograma en JPG de **1024×512**, calidad ~80, en `docs/data/frames/<id>/000.jpg`, `001.jpg`, etc.
 4. **Tapar** las zonas con texto incrustado (fechas, barra de colores) y **cualquier logo o marca de NASA**: las reglas prohíben usar marcas de NASA en lo que generamos (sección 10.4). Las imágenes que mostramos no llevan logos.
 5. **Calcular los valores:**
-   - `points` (`fire`): máscara de color en HSV → agrupar píxeles en focos → centro (lon, lat) e intensidad 0 a 1. **Hasta 1500 focos por fotograma** (si hay más, los más intensos).
+   - `points` (`fire`): máscara de color en HSV → agrupar píxeles en focos → centro (lon, lat) e intensidad 0 a 1. **Hasta 800 focos por fotograma** (los más intensos; con 1500 el archivo pasaba el presupuesto). `stats.count` guarda el **total detectado** antes del recorte, y la web usa ese total para el conteo y el nivel.
    - `field` (los demás): color → valor con la barra de colores (el color más cercano en la escala) → **grilla de 2° (180×90 celdas)**, con valores en `uint8` (0 a 255) mapeados al rango del fenómeno. Las celdas sin dato (tierra en `ocean`, por ejemplo) valen 255 = "sin dato".
 6. **Estadísticas por fotograma:** media, percentil 90, máximo y el lugar del máximo.
 7. **Exportar** a `docs/data/<id>.js` (formato de la sección 6.5).
@@ -364,6 +366,8 @@ window.EARTH_BY_EAR_DATA.ocean = {
 - **Celda (i, j) de la grilla:** centro en `lon = lon0 + step*(i + 0.5)`, `lat = lat0 - step*(j + 0.5)`. Fila `j` de norte a sur.
 - **Fenómenos de tipo `points` (`fire`):** en vez de `grid`, cada fotograma trae `"points": [[lon, lat, intensity], ...]`, con coordenadas de 2 decimales e intensidad de 0 a 1, y `units`/`value_range` describen el FRP.
 - **Intensidad para el sonido y el juego:** `intensity = clamp((value - intensity_range[0]) / (intensity_range[1] - intensity_range[0]), 0, 1)`.
+- **Agregado en el P4:** `"scale": "log"` (opcional; lluvia y PM2.5). Si está, el byte de la grilla y la intensidad usan log10: `value = 10^(log10(v0) + b/254 · (log10(v1) − log10(v0)))`. Así los valores chicos no se pierden.
+- **Agregado en el P4:** en `fire`, `units` es `"relative"` y la intensidad (0 a 1) sale mitad del color (FRP 0–8 MW de la barra) y mitad del tamaño del foco (`intensity_note`). La web la muestra en %. `date_note` avisa cuando la fecha es aproximada (el mar ya no la necesita: el video tiene 901 fotogramas, uno por día, del 25/05/2024 al 11/11/2026).
 
 ### 6.6 Limitaciones honestas (decirlas en About y en la presentación)
 - Los valores salen del **color de la imagen**, no de las mediciones calibradas. Son aproximaciones, y por eso validamos (juego y FIRMS).

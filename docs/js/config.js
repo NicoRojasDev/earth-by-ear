@@ -14,19 +14,19 @@
         decimals: 1
       },
       {
-        id: 'ocean', enabled: false, type: 'field', instrument: 'cello',
-        stats: [['mean', 'mean'], ['shareAbove', 'warmShare'], ['maxPlace', 'maxPlace']], shareThreshold: 1, decimals: 1, signed: true, preferOcean: true
+        id: 'ocean', enabled: true, type: 'field', instrument: 'cello',
+        stats: [['mean', 'mean'], ['shareAbove', 'warmShare'], ['maxPlace', 'maxPlace']], shareThreshold: 1, decimals: 1, signed: true
       },
       {
-        id: 'rain', enabled: false, type: 'field', instrument: 'drops',
-        stats: [['shareAbove', 'share'], ['meanWhere', 'mean'], ['maxPlace', 'maxPlace']], shareThreshold: 0.1, decimals: 1
+        id: 'rain', enabled: true, type: 'field', instrument: 'drops',
+        stats: [['shareAbove', 'share'], ['meanWhere', 'mean'], ['maxPlace', 'maxPlace']], shareThreshold: 0.1, dryBelow: 0.1, decimals: 1
       },
       {
-        id: 'air', enabled: false, type: 'field', instrument: 'pad',
+        id: 'air', enabled: true, type: 'field', instrument: 'pad',
         stats: [['mean', 'mean'], ['shareAbove', 'hotShare'], ['maxPlace', 'maxPlace']], shareThreshold: 30, decimals: 1
       },
       {
-        id: 'smoke', enabled: false, type: 'field', instrument: 'smog',
+        id: 'smoke', enabled: true, type: 'field', instrument: 'smog',
         stats: [['mean', 'mean'], ['shareAbove', 'badShare'], ['maxPlace', 'maxPlace']], shareThreshold: 25, decimals: 0
       }
     ],

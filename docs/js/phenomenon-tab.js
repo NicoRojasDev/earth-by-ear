@@ -170,8 +170,8 @@
     if (!this.ds) return;
     const n = this.ds.frames.length;
     this.k = ((k % n) + n) % n;
-    this.render();
     if (this.mode === 'explore') this.updateNear();
+    this.render();
     if (announce) EBE.a11y.announce(this.describeText());
   };
 
@@ -215,8 +215,9 @@
     this.el.mListen.setAttribute('aria-pressed', mode === 'listen' ? 'true' : 'false');
     this.el.mExplore.setAttribute('aria-pressed', mode === 'explore' ? 'true' : 'false');
     this.map.setInteractive(mode === 'explore');
+    if (mode === 'explore') this.updateNear();
     this.render();
-    if (mode === 'explore') { this.updateNear(); this.el.map.focus(); }
+    if (mode === 'explore') this.el.map.focus();
     this.startScene();
     EBE.a11y.announce(t(mode === 'listen' ? 'common.listenHelp' : 'common.exploreHelp'));
   };
@@ -224,7 +225,11 @@
   // ---------- text ----------
   P.fmtValue = function (v) {
     const c = this.cfg, units = this.ds.units;
-    return (c.signed && v > 0 ? '+' : '') + EBE.i18n.num(v, c.decimals || 0) + ' ' + units;
+    if (units === 'relative') return EBE.i18n.num(100 * v, 0) + '%';
+    const d = c.decimals || 0;
+    // Small values on log scales (rain, PM2.5) need one more decimal.
+    const digits = this.ds.scale === 'log' && Math.abs(v) < 1 ? Math.max(d, 1) : d;
+    return (c.signed && v > 0 ? '+' : '') + EBE.i18n.num(v, digits) + ' ' + units;
   };
   P.fmtShare = function (x) { return EBE.i18n.num(100 * x, 0) + '%'; };
 
@@ -237,7 +242,10 @@
       case 'mean': return this.fmtValue(s.mean);
       case 'meanWhere': return this.fmtValue(s.meanWhere);
       case 'shareAbove': return this.fmtShare(s.shareAbove);
-      case 'maxPlace': return s.max ? this.fmtValue(s.max.value) + ', ' + EBE.geo.placeName(s.max.lon, s.max.lat, this.cfg.preferOcean) : '—';
+      case 'maxPlace':
+        if (!s.max) return '—';
+        if (this.ds.type === 'points') return EBE.geo.placeName(s.max.lon, s.max.lat, this.ds.type === 'points');
+        return this.fmtValue(s.max.value) + ', ' + EBE.geo.placeName(s.max.lon, s.max.lat, this.ds.type === 'points');
       default: return '';
     }
   };
@@ -249,7 +257,7 @@
       date: EBE.i18n.date(fr.t),
       count: s.count !== undefined ? EBE.i18n.num(s.count, 0) : '',
       level: t(levelKey(fr.rank)),
-      place: s.max ? EBE.geo.placeName(s.max.lon, s.max.lat, this.cfg.preferOcean) : '—',
+      place: s.max ? EBE.geo.placeName(s.max.lon, s.max.lat, this.ds.type === 'points') : '—',
       mean: s.mean !== undefined ? this.fmtValue(s.mean) : '',
       share: s.shareAbove !== undefined ? this.fmtShare(s.shareAbove) : '',
       max: s.max ? this.fmtValue(s.max.value) : ''
@@ -320,7 +328,7 @@
   P.readoutText = function () {
     const c = this.cursor, near = this.near, ds = this.ds;
     if (!near) return '';
-    const place = EBE.geo.placeName(c.lon, c.lat, this.cfg.preferOcean);
+    const place = EBE.geo.placeName(c.lon, c.lat);
     if (ds.type === 'points') {
       const R = EBE.config.sound.exploreRadiusKm;
       if (!near.best) return t('fire.exploreNone');
@@ -328,14 +336,25 @@
       return t('fire.exploreNear', { count: EBE.i18n.num(near.list.length), km: R, dist: EBE.i18n.num(near.d), dir: EBE.geo.dir8(near.b) }) + ' ' + t('common.cursorAt', { place });
     }
     if (near.value === null) return t('common.noData') + ' · ' + place;
+    if (this.isDry()) return t(this.id + '.none') + ' · ' + place;
     return this.fmtValue(near.value) + ' · ' + place;
   };
 
+  // At most one text update every 1.2 s while the finger moves; the last position is always reported.
   P.updateReadout = function (force) {
     const now = Date.now();
-    if (!force && now - this.lastReadout < 1200) return;
+    clearTimeout(this.readoutTimer);
+    if (!force && now - this.lastReadout < 1200) {
+      this.readoutTimer = setTimeout(() => this.updateReadout(true), 1200 - (now - this.lastReadout));
+      return;
+    }
     this.lastReadout = now;
     this.el.readout.textContent = this.readoutText();
+  };
+
+  P.isDry = function () {
+    const d = this.cfg.dryBelow, n = this.near;
+    return d !== undefined && n && n.value !== null && n.value !== undefined && n.value < d;
   };
 
   P.describe = function () {
@@ -414,7 +433,7 @@
     }
     // Fields: the instrument plays the value under the finger.
     const pan = 0.9 * c.lon / 180, pitch = (c.lat + 90) / 180;
-    if (near.value === null) {
+    if (near.value === null || this.isDry()) {      // no data, or no rain here: silence
       this.inst.setBed({ level: 0, bright: 0, pan, pitch });
       EBE.audio.setAlert(0);
       setNext(until);

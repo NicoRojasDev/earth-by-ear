@@ -1,0 +1,280 @@
+{
+  "_comment": "Written with the assistance of Claude (Anthropic) for NASA Space Apps 2026. One block per phenomenon; read by scripts/build_data.py. Pixel coordinates refer to the colorbar image named in each block.",
+  "fire": {
+    "svs_id": 5113,
+    "title": "Fires (VIIRS Fire Radiative Power, 5-day window)",
+    "source": "NASA SVS 5113 - Active Fires As Observed by VIIRS, 2024-Present (equirectangular version)",
+    "type": "points",
+    "movie": "fires_frp_VIIRS_eq_nl_2048p30.mp4",
+    "dates": {
+      "kind": "linear_days",
+      "start": "2024-11-13",
+      "end": "2026-11-13",
+      "first_index": 0,
+      "last_index": 899
+    },
+    "select": {
+      "every_days": 5,
+      "count": 60,
+      "until": "2026-10-30"
+    },
+    "units": "relative",
+    "value_range": [
+      0,
+      1
+    ],
+    "intensity_range": [
+      0,
+      1
+    ],
+    "max_points": 800,
+    "colorbar": {
+      "kind": "gradient",
+      "url": "https://svs.gsfc.nasa.gov/vis/a000000/a005100/a005113/VIIRS_fires_latest.png",
+      "file": "VIIRS_fires_latest.png",
+      "rows": [
+        1866,
+        1892
+      ],
+      "x0": 99,
+      "x1": 584,
+      "v0": 0,
+      "v1": 8,
+      "scale": "linear"
+    },
+    "mask_rects": [],
+    "intensity_note": "Relative fire intensity (0-1): half from the FRP colorbar (0-8 MW), half from the size of the fire cluster."
+  },
+  "ocean": {
+    "svs_id": 5176,
+    "title": "Ocean Heat (Sea Surface Temperature Anomaly)",
+    "source": "NASA SVS 5176 - Sea Surface Temperature (SST) Anomaly - Near Real Time (no-dates version)",
+    "type": "field",
+    "movie": "sst_anomaly_nodates_30_sec_4096x2048_2x1_30p.mp4",
+    "dates": {
+      "kind": "linear_days",
+      "start": "2024-05-25",
+      "end": "2026-11-11",
+      "first_index": 0,
+      "last_index": 900
+    },
+    "select": {
+      "count": 60
+    },
+    "units": "°C",
+    "value_range": [
+      -4,
+      4
+    ],
+    "intensity_range": [
+      0,
+      4
+    ],
+    "colorbar": {
+      "kind": "gradient",
+      "url": "https://svs.gsfc.nasa.gov/vis/a000000/a005100/a005176/sst_mur_anomaly_auto_colorbar_01_print.jpg",
+      "file": "sst_mur_anomaly_auto_colorbar_01_print.jpg",
+      "rows": [
+        262,
+        278
+      ],
+      "x0": 128,
+      "x1": 896,
+      "v0": -4,
+      "v1": 4,
+      "scale": "linear",
+      "extend_ends": [
+        0.85,
+        0.7,
+        0.55,
+        0.4
+      ]
+    },
+    "max_color_distance": 14,
+    "min_valid_fraction": 0.3,
+    "mask_rects": [],
+    "exclude_gray": [
+      22,
+      222
+    ]
+  },
+  "rain": {
+    "svs_id": 4285,
+    "title": "Rain & Snow (IMERG near real-time precipitation rate)",
+    "source": "NASA SVS 4285 - Near Real-Time Global Precipitation from the Global Precipitation Measurement Constellation (flatalpha frames)",
+    "type": "field",
+    "frames_glob": "imergert_alpha.*.png",
+    "dates": {
+      "kind": "filename",
+      "pattern": "imergert_alpha\\.(\\d{4}-\\d{2}-\\d{2})T(\\d{2})-(\\d{2})-(\\d{2})Z"
+    },
+    "select": {
+      "count": 60
+    },
+    "units": "mm/h",
+    "scale": "log",
+    "value_range": [
+      0.05,
+      60
+    ],
+    "intensity_range": [
+      0.1,
+      20
+    ],
+    "alpha_dry_is_zero": true,
+    "base_map_from": "fire",
+    "colorbar": {
+      "kind": "boxes",
+      "files": [
+        {
+          "url": "https://svs.gsfc.nasa.gov/vis/a000000/a004200/a004285/rainbarwhite2.png",
+          "file": "rainbarwhite2.png"
+        },
+        {
+          "url": "https://svs.gsfc.nasa.gov/vis/a000000/a004200/a004285/snowbarwhite2.png",
+          "file": "snowbarwhite2.png"
+        }
+      ],
+      "row": 37,
+      "x": [
+        56,
+        92,
+        128,
+        165,
+        201,
+        238,
+        274,
+        310,
+        347,
+        383,
+        409
+      ],
+      "values": [
+        0.14,
+        0.24,
+        0.39,
+        0.71,
+        1.41,
+        2.45,
+        3.87,
+        7.07,
+        14.1,
+        31.6,
+        60
+      ]
+    },
+    "max_color_distance": 30,
+    "min_valid_fraction": 0.3,
+    "mask_rects": []
+  },
+  "air": {
+    "svs_id": 5147,
+    "title": "Air Temperature (GEOS-FP near-surface temperature)",
+    "source": "NASA SVS 5147 - GEOS-FP Near-Surface Temperature",
+    "type": "field",
+    "movie": "MC01_stage3_GMAO_near_surface_temperature_2048x1024_en.mp4",
+    "dates": {
+      "kind": "linear_hours",
+      "start": "2026-10-29T09:00:00Z",
+      "step_hours": 1
+    },
+    "select": {
+      "every": 6
+    },
+    "units": "°C",
+    "value_range": [
+      -40,
+      40
+    ],
+    "intensity_range": [
+      0,
+      40
+    ],
+    "colorbar": {
+      "kind": "gradient",
+      "url": "https://svs.gsfc.nasa.gov/vis/a000000/a005100/a005147/NearSurfaceTemperature_colorbar_plain.png",
+      "file": "NearSurfaceTemperature_colorbar_plain.png",
+      "rows": [
+        88,
+        102
+      ],
+      "x0": 73,
+      "x1": 462,
+      "v0": -40,
+      "v1": 40,
+      "scale": "linear"
+    },
+    "max_color_distance": 22,
+    "min_valid_fraction": 0.3,
+    "mask_rects": [
+      [
+        0,
+        0,
+        360,
+        80
+      ],
+      [
+        0,
+        920,
+        520,
+        1024
+      ]
+    ]
+  },
+  "smoke": {
+    "svs_id": 5151,
+    "title": "Air Quality (GEOS-CF near-surface PM2.5)",
+    "source": "NASA SVS 5151 - Particulate Matter (PM) 2.5",
+    "type": "field",
+    "movie": "MC01_stage4_GMAO_pm25_2048x1024_en.mp4",
+    "dates": {
+      "kind": "linear_hours",
+      "start": "2026-10-29T09:00:00Z",
+      "step_hours": 1
+    },
+    "select": {
+      "every": 6
+    },
+    "units": "µg/m³",
+    "scale": "log",
+    "value_range": [
+      0.4,
+      409.6
+    ],
+    "intensity_range": [
+      5,
+      150
+    ],
+    "colorbar": {
+      "kind": "gradient",
+      "url": "https://svs.gsfc.nasa.gov/vis/a000000/a005100/a005151/PM2.5_colorbar_plain.png",
+      "file": "PM2.5_colorbar_plain.png",
+      "rows": [
+        52,
+        66
+      ],
+      "x0": 73,
+      "x1": 462,
+      "v0": 0.4,
+      "v1": 409.6,
+      "scale": "log"
+    },
+    "max_color_distance": 22,
+    "min_valid_fraction": 0.3,
+    "mask_rects": [
+      [
+        0,
+        0,
+        360,
+        80
+      ],
+      [
+        0,
+        920,
+        520,
+        1024
+      ]
+    ],
+    "exclude_dark": 90
+  }
+}

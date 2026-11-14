@@ -56,8 +56,15 @@
   function prepare(ds) {
     const cfg = EBE.config.byId(ds.id) || {};
     const [v0, v1] = ds.value_range, [i0, i1] = ds.intensity_range;
-    ds.valueOfByte = b => v0 + (b / 254) * (v1 - v0);
-    ds.intensityOf = v => clamp((v - i0) / ((i1 - i0) || 1), 0, 1);
+    if (ds.scale === 'log') {
+      // Grid bytes and intensity use log10 (rain, PM2.5): small values keep their detail.
+      const l0 = Math.log10(v0), l1 = Math.log10(v1), m0 = Math.log10(i0), m1 = Math.log10(i1);
+      ds.valueOfByte = b => Math.pow(10, l0 + (b / 254) * (l1 - l0));
+      ds.intensityOf = v => clamp((Math.log10(Math.max(v, 1e-6)) - m0) / ((m1 - m0) || 1), 0, 1);
+    } else {
+      ds.valueOfByte = b => v0 + (b / 254) * (v1 - v0);
+      ds.intensityOf = v => clamp((v - i0) / ((i1 - i0) || 1), 0, 1);
+    }
     const keys = [];
 
     ds.frames.forEach(fr => {
@@ -66,37 +73,57 @@
         let sum = 0, best = null;
         const w = new Float32Array(pts.length);
         pts.forEach((p, k) => { sum += p[2]; w[k] = 0.15 + p[2] * p[2]; if (!best || p[2] > best[2]) best = p; });
+        const total = fr.stats && fr.stats.count !== undefined ? fr.stats.count : pts.length;
         fr.summary = {
-          count: pts.length,
+          count: total,                 // every fire spot detected; fr.points keeps the most intense ones
           meanIntensity: pts.length ? sum / pts.length : 0,
           max: best ? { lon: best[0], lat: best[1], value: v0 + best[2] * (v1 - v0) } : null
         };
         fr.cum = cumulative(w);
-        keys.push(pts.length);
+        keys.push(total);
       } else {
         const grid = decodeBase64(fr.grid);
         fr.cells = grid;
-        const W = ds.grid.w, H = ds.grid.h;
+        const W = ds.grid.w, H = ds.grid.h, g = ds.grid;
+        // Area weights: cells near the poles are smaller, so they count less.
+        const rowW = new Float32Array(H);
+        for (let j = 0; j < H; j++) rowW[j] = Math.cos((g.lat0 - g.step * (j + 0.5)) * Math.PI / 180);
         const idx = [], weights = [];
-        let n = 0, sum = 0, sumI = 0, above = 0, bestB = -1, bestK = -1;
+        let wsum = 0, sum = 0, sumI = 0, aboveW = 0, aboveSum = 0, bestB = -1, bestK = -1;
         const thr = cfg.shareThreshold;
         for (let k = 0; k < W * H; k++) {
           const b = grid[k]; if (b === 255) continue;
+          const w = rowW[(k / W) | 0];
           const v = ds.valueOfByte(b), it = ds.intensityOf(v);
-          n++; sum += v; sumI += it;
-          if (thr !== undefined && v >= thr) above++;
+          wsum += w; sum += v * w; sumI += it * w;
+          if (thr !== undefined && v >= thr) { aboveW += w; aboveSum += v * w; }
           if (b > bestB) { bestB = b; bestK = k; }
-          if (it > 0.02) { idx.push(k); weights.push(Math.pow(it, 1.5)); }
+          if (it > 0.02) { idx.push(k); weights.push(Math.pow(it, 1.5) * w); }
+        }
+        // Several cells can share the top value (values beyond the colorbar saturate): pick the one in
+        // the middle of the largest hot area (highest 3x3 neighbourhood average).
+        if (bestK >= 0) {
+          let bestScore = -1;
+          for (let k = 0; k < W * H; k++) {
+            const b = grid[k]; if (b === 255 || b < bestB - 2) continue;
+            const i = k % W, j = (k / W) | 0;
+            let acc = 0, cnt = 0;
+            for (let dj = -2; dj <= 2; dj++) for (let di = -2; di <= 2; di++) {
+              const jj = j + dj; if (jj < 0 || jj >= H) continue;
+              const nb = grid[jj * W + ((i + di + W) % W)];
+              cnt++; if (nb !== 255) acc += nb;
+            }
+            const score = acc / cnt;
+            if (score > bestScore) { bestScore = score; bestK = k; }
+          }
         }
         const bi = bestK % W, bj = Math.floor(bestK / W);
-        const g = ds.grid;
         fr.summary = {
-          valid: n,
-          mean: n ? sum / n : 0,
-          meanIntensity: n ? sumI / n : 0,
-          shareAbove: n ? above / n : 0,
-          meanWhere: above ? (function () { let s = 0, c = 0; for (let k = 0; k < W * H; k++) { const b = grid[k]; if (b === 255) continue; const v = ds.valueOfByte(b); if (v >= thr) { s += v; c++; } } return c ? s / c : 0; })() : 0,
-          max: bestK >= 0 ? { lon: g.lon0 + g.step * (bi + 0.5), lat: g.lat0 - g.step * (bj + 0.5), value: ds.valueOfByte(bestB) } : null
+          mean: wsum ? sum / wsum : 0,
+          meanIntensity: wsum ? sumI / wsum : 0,
+          shareAbove: wsum ? aboveW / wsum : 0,
+          meanWhere: aboveW ? aboveSum / aboveW : 0,
+          max: bestK >= 0 ? { lon: g.lon0 + g.step * (bi + 0.5), lat: g.lat0 - g.step * (bj + 0.5), value: ds.valueOfByte(grid[bestK]) } : null
         };
         fr.eventCells = Int32Array.from(idx);
         fr.cum = cumulative(weights);

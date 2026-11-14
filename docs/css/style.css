@@ -108,6 +108,32 @@ h3 { font-size: 1.1rem; color: var(--muted); }
 .credits li { margin: 4px 0; }
 .foot { color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--line); margin-top: 24px; padding-top: 8px; }
 
+/* Audio Tour */
+.tour-controls { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0; }
+.tour-controls .btn { flex: 1 1 140px; min-height: 64px; font-size: 1.15rem; }
+.tour-play { flex: 2 1 200px !important; }
+.tour-text { font-size: 1.15rem; background: var(--panel-2); border-radius: 10px; padding: 14px 16px; min-height: 5em; }
+.tour-counter { color: var(--text); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* Game */
+.rules li { margin: 4px 0; }
+.choices { border: 1px solid var(--line); border-radius: 10px; margin: 12px 0; padding: 8px 12px; }
+.choices legend { font-weight: 700; padding: 0 6px; }
+.choices > div { display: flex; flex-wrap: wrap; gap: 8px; }
+.choice { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 6px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel-2); cursor: pointer; }
+.choice input { width: 20px; height: 20px; accent-color: var(--accent-2); }
+.choice:has(input:checked) { border-color: var(--accent); background: #1f3b52; }
+.feedback { font-weight: 700; min-height: 1.5em; }
+.summary { font-size: 1.15rem; font-weight: 700; }
+.table-wrap { overflow-x: auto; }
+.matrix { border-collapse: collapse; margin: 8px 0; }
+.matrix caption { text-align: left; color: var(--muted); padding-bottom: 4px; }
+.matrix th, .matrix td { border: 1px solid var(--line); padding: 6px 10px; text-align: center; }
+.matrix td.diag { background: #12402a; font-weight: 700; }
+textarea { width: 100%; background: var(--panel-2); color: var(--text); border: 1px solid var(--line); border-radius: 8px; font: 0.85rem ui-monospace, monospace; padding: 8px; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
