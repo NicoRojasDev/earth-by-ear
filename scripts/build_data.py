@@ -236,6 +236,15 @@ def base_map():
 
 # ---------------------------------------------------------------- values
 def fire_points(img, lut, cfg):
+    """Most intense fire spots for the web (max_points) and the total number detected."""
+    spots = fire_spots(img, lut, cfg)
+    total = len(spots)                                # every fire spot detected in the frame
+    pts = spots[:cfg.get("max_points", 800)]          # the web gets the most intense ones
+    return [[p[2], p[3], round(p[0], 2)] for p in pts], total
+
+
+def fire_spots(img, lut, cfg):
+    """Every fire spot in a frame as (intensity, area_px, lon, lat), most intense first."""
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     h, s, v = hsv[..., 0].astype(int), hsv[..., 1].astype(int), hsv[..., 2].astype(int)
     warm = (h <= 40) & (s > 45) & (v > 70)
@@ -246,7 +255,7 @@ def fire_points(img, lut, cfg):
     values, _ = lut.lookup(img)
     n, labels, stats, cents = cv2.connectedComponentsWithStats(mask, connectivity=8)
     if n <= 1:
-        return [], 0
+        return []
     vmax = np.zeros(n, np.float32)
     np.maximum.at(vmax, labels.ravel(), np.where(mask.ravel() > 0, values.ravel(), 0))
     H, W = mask.shape
@@ -262,9 +271,7 @@ def fire_points(img, lut, cfg):
         inten = 0.5 * color_part + 0.5 * size_part
         pts.append((inten, area, round(float(lon), 2), round(float(lat), 2)))
     pts.sort(key=lambda p: (p[0], p[1]), reverse=True)
-    total = len(pts)                                  # every fire spot detected in the frame
-    pts = pts[:cfg.get("max_points", 800)]            # the web gets the most intense ones
-    return [[p[2], p[3], round(p[0], 2)] for p in pts], total
+    return pts
 
 
 def field_grid(img_raw, lut, cfg):

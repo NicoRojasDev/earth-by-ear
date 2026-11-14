@@ -210,6 +210,8 @@
 
   P.setMode = function (mode) {
     if (this.mode === mode) return;
+    // Explore only makes sense with sound: switching to it is a user gesture, so sound can start here.
+    if (mode === 'explore' && !EBE.audio.isOn()) EBE.audio.enable();
     this.mode = mode;
     if (mode === 'explore') this.pause(true);
     this.el.mListen.setAttribute('aria-pressed', mode === 'listen' ? 'true' : 'false');
@@ -299,6 +301,7 @@
   // ---------- Explore ----------
   P.moveCursor = function (lon, lat, fromPointer) {
     if (this.mode !== 'explore') this.setMode('explore');
+    if (!EBE.audio.isOn()) EBE.audio.enable();
     let lo = lon; if (lo > 180) lo -= 360; if (lo < -180) lo += 360;
     this.cursor = { lon: lo, lat: clamp(lat, -89, 89) };
     this.map.setCursor(this.cursor.lon, this.cursor.lat, true, this.ds && this.ds.type === 'points' ? EBE.config.sound.exploreRadiusKm : 0);

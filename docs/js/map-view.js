@@ -196,11 +196,12 @@
       for (let lat = -90; lat <= 90; lat += 30) { const [, y] = this.toXY(0, lat); c.beginPath(); c.moveTo(0, y); c.lineTo(this.w, y); c.stroke(); }
     }
     if (!this.points) return;
-    const scale = this.w / 1024;
+    // Glow size follows the map width, so small phone screens do not turn fires into one blob.
+    const scale = Math.max(0.4, Math.min(1.2, this.w / 1024));
     c.globalCompositeOperation = 'lighter';
     for (const p of this.points) {
       const [x, y] = this.toXY(p[0], p[1]);
-      const r = (1.4 + 3.2 * p[2]) * Math.max(0.7, scale);
+      const r = (1.1 + 2.8 * p[2]) * scale;
       const g = c.createRadialGradient(x, y, 0, x, y, r * 2.2);
       g.addColorStop(0, p[2] > 0.66 ? 'rgba(255,250,230,0.95)' : 'rgba(255,214,120,0.9)');
       g.addColorStop(0.35, 'rgba(255,140,40,0.6)');

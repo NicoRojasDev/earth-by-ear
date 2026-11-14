@@ -231,7 +231,7 @@ Qué es Earth by Ear, cómo se traduce cada dato en sonido, de dónde salen los 
 - [ ] Publicación de control en GitHub Pages (sábado a la noche).
 - [ ] P8 · Minijuego. **Programado y probado de punta a punta** (10 rondas, matriz de confusión, valor p, CSV). Falta que lo jueguen ~10 personas.
 - [ ] P9 · Audio Tour.
-- [ ] P10 · Repaso de accesibilidad, celulares y rendimiento.
+- [ ] P10 · Repaso de accesibilidad, celulares y rendimiento. **Hecho por Claude:** axe-core (WCAG 2.1 A/AA + buenas prácticas) da **0 problemas** en todas las pestañas, en inglés y en español; en celular (390 px) no hay desborde horizontal y explorar con el dedo funciona; el sonido se activa solo al entrar a Explorar. **Falta el equipo:** prueba con NVDA o TalkBack real y en 2 celulares reales.
 - [ ] P11 · Validación (resultados del juego y FIRMS).
 - [ ] P12 · About, README, créditos y publicación final.
 - [ ] Video, página del proyecto y entrega.
