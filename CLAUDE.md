@@ -221,7 +221,7 @@ Qué es Earth by Ear, cómo se traduce cada dato en sonido, de dónde salen los 
 - [x] Idea, nombre y alcance definidos (este archivo).
 - [x] Prototipo de los incendios con datos simulados.
 - [x] P0 · Repo creado y estructura armada. Repo: https://github.com/NicoRojasDev/earth-by-ear · App: https://nicorojasdev.github.io/earth-by-ear/ · Carpeta local: `C:\Users\juans\Documents\earth-by-ear` (fuera de OneDrive a propósito).
-- [ ] P1 · Clave de FIRMS verificada y fechas disponibles.
+- [x] P1 · Clave de FIRMS verificada y fechas disponibles (`scripts/check_firms.py`, sábado 13:04).
 - [ ] P2 · Auditoría de datos de los 5 fenómenos.
 - [ ] P3 · Esqueleto web (archivos, pestañas, bilingüe EN/ES, configuración).
 - [ ] P4 · Pipeline genérico con datos reales de `fire` y `ocean`.
@@ -298,9 +298,11 @@ FIRMS da **los mismos focos que detecta el satélite, pero como tabla**. Lo enla
 - **Clave gratuita (MAP_KEY):** ya la tenemos, en `.env` como `FIRMS_MAP_KEY`. Límite: 5000 consultas cada 10 minutos.
 - **Documentación:** https://firms.modaps.eosdis.nasa.gov/api/ (servicios `area`, `country` y `data_availability`).
 - **Consulta por zona:** `https://firms.modaps.eosdis.nasa.gov/api/area/csv/[MAP_KEY]/[SOURCE]/[oeste,sur,este,norte]/[DIAS]/[AAAA-MM-DD]`
-- **Fuentes:** `VIIRS_SNPP_NRT` y `VIIRS_NOAA20_NRT` (fechas recientes); `VIIRS_SNPP_SP` (archivo histórico). `TODO verify`: fechas que cubre cada una y máximo de días por consulta (lo completa el P1).
+- **Fuentes y fechas (verificado en el P1, 14/11/2026 con `data_availability`):** `VIIRS_SNPP_SP` 2012-01-20 a 2026-07-31 · `VIIRS_SNPP_NRT` 2026-08-01 a **2026-11-02 (dejó de actualizarse; 0 focos en los últimos días)** · `VIIRS_NOAA20_NRT` 2026-08-01 a 2026-11-14 · `VIIRS_NOAA20_SP` 2018-04-01 a 2026-07-31 · `VIIRS_NOAA21_NRT` 2024-01-17 a 2026-11-14. **Para fechas recientes usar NOAA-20**; para el período de SVS 5113 (Suomi NPP) usar `VIIRS_SNPP_SP` hasta el 31/07/2026.
+- **Máximo de días por consulta:** de 1 a 5 (documentación oficial de la API `area`). Con fecha, devuelve desde esa fecha hasta fecha + días − 1.
 - **Zona de Santiago del Estero (aproximada):** `-65.2,-30.4,-61.7,-25.6`.
-- **Columnas esperadas** (`TODO verify`, lo completa el P1): `latitude`, `longitude`, `frp` (MW), `acq_date`, `acq_time`, `confidence`, `daynight`.
+- **Columnas (verificado):** `latitude, longitude, bright_ti4, scan, track, acq_date, acq_time, satellite, instrument, confidence, version, bright_ti5, frp, daynight` (el archivo SP agrega `type`).
+- **Dato para el pitch (P1):** Santiago del Estero, 10 al 14/11/2026, NOAA-20: **1054 focos**, FRP total 19.205 MW, máximo 478,7 MW. Archivo histórico 1 al 5/09/2025 (SNPP SP): 373 focos.
 - Como SVS 5113 usa una **ventana de 5 días**, para comparar hay que sumar los focos de FIRMS de esos mismos 5 días.
 - **Métrica:** correlación entre los focos que salen de los píxeles y los de FIRMS, por fecha, en Santiago del Estero. Va en `pitch/validation.md`.
 
