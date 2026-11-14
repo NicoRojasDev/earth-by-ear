@@ -1,0 +1,454 @@
+// Written with the assistance of Claude (Anthropic) for NASA Space Apps 2026.
+// One generic tab for any phenomenon: real frame + timeline + Listen + Explore, for points and fields.
+(function () {
+  'use strict';
+  const EBE = window.EBE = window.EBE || {};
+  const t = (k, p) => EBE.i18n.t(k, p);
+  const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+  const smooth = (a, b, x) => { const u = clamp((x - a) / (b - a), 0, 1); return u * u * (3 - 2 * u); };
+
+  function levelKey(rank) {
+    if (rank < 0.25) return 'level.low';
+    if (rank < 0.75) return 'level.normal';
+    if (rank < 0.9) return 'level.high';
+    return 'level.veryHigh';
+  }
+
+  function PhenomenonTab(cfg, panel) {
+    this.cfg = cfg; this.id = cfg.id; this.panel = panel;
+    this.ds = null; this.k = 0; this.mode = 'listen'; this.playing = false; this.speed = 1;
+    this.cursor = { lon: -63.5, lat: -27.8 };
+    this.near = null; this.lastReadout = 0;
+    this.inst = null; this.built = false; this.active = false;
+  }
+  const P = PhenomenonTab.prototype;
+
+  P.build = function () {
+    const id = this.id;
+    this.panel.innerHTML = `
+      <div class="ph-head">
+        <h2 id="h-${id}" data-i18n="${id}.name"></h2>
+        <span class="badge" data-el="badge"></span>
+      </div>
+      <p class="lead" data-i18n="${id}.lead"></p>
+      <p class="status" data-el="status" role="status"></p>
+      <div class="ph-grid">
+        <div class="ph-main">
+          <figure class="map-figure">
+            <div class="map-wrap" data-el="map" tabindex="0" role="application" data-i18n-aria="common.mapLabel"></div>
+            <figcaption class="sr-only" data-el="alt"></figcaption>
+          </figure>
+          <div class="timeline" role="group" data-i18n-aria="common.timeline">
+            <button type="button" class="btn icon" data-el="prev" data-i18n-aria="common.prev"><span aria-hidden="true">⏮</span></button>
+            <button type="button" class="btn icon primary" data-el="play"><span aria-hidden="true" data-el="playIcon">▶</span></button>
+            <button type="button" class="btn icon" data-el="next" data-i18n-aria="common.next"><span aria-hidden="true">⏭</span></button>
+            <input type="range" class="slider" data-el="slider" min="0" max="0" value="0" step="1" data-i18n-aria="common.timeline">
+            <label class="speed"><span data-i18n="common.speed"></span>
+              <select data-el="speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select>
+            </label>
+            <output class="date" data-el="date"></output>
+          </div>
+          <div class="modes" role="group" data-i18n-aria="common.mode">
+            <button type="button" class="btn mode" data-el="mListen" aria-pressed="true" data-i18n="common.listen"></button>
+            <button type="button" class="btn mode" data-el="mExplore" aria-pressed="false" data-i18n="common.explore"></button>
+          </div>
+          <p class="help" data-el="help"></p>
+          <p class="readout" data-el="readout" aria-live="polite"></p>
+          <p class="keys" data-i18n="common.keys"></p>
+        </div>
+        <div class="ph-side">
+          <h3 data-i18n="common.data"></h3>
+          <dl class="stats" data-el="stats"></dl>
+          <p class="level" data-el="level"></p>
+          <p class="desc" data-el="desc"></p>
+          <details class="how" open>
+            <summary data-i18n="common.howItSounds"></summary>
+            <table>
+              <thead><tr><th scope="col" data-i18n="common.dataCol"></th><th scope="col" data-i18n="common.soundCol"></th></tr></thead>
+              <tbody>
+                <tr><th scope="row" data-i18n="sound.identity"></th><td data-i18n="${id}.instrument"></td></tr>
+                <tr><th scope="row" data-i18n="sound.intensity"></th><td data-i18n="sound.intensityText"></td></tr>
+                <tr><th scope="row" data-i18n="sound.space"></th><td data-i18n="sound.spaceText"></td></tr>
+                <tr><th scope="row" data-i18n="sound.northSouth"></th><td data-i18n="sound.northSouthText"></td></tr>
+                <tr><th scope="row" data-i18n="sound.alert"></th><td data-i18n="sound.alertText"></td></tr>
+              </tbody>
+            </table>
+          </details>
+          <p class="credit"><span data-i18n="common.source"></span>: <span data-i18n="${id}.credit"></span></p>
+        </div>
+      </div>`;
+    this.el = {};
+    this.panel.querySelectorAll('[data-el]').forEach(e => { this.el[e.dataset.el] = e; });
+    this.map = new EBE.MapView(this.el.map, { onPointer: (lon, lat) => this.moveCursor(lon, lat, true) });
+    this.bind();
+    EBE.i18n.apply(this.panel);
+    this.built = true;
+  };
+
+  P.bind = function () {
+    const el = this.el;
+    el.play.addEventListener('click', () => { this.playing ? this.pause() : this.play(); });
+    el.prev.addEventListener('click', () => { this.pause(true); this.setFrame(this.k - 1, true); });
+    el.next.addEventListener('click', () => { this.pause(true); this.setFrame(this.k + 1, true); });
+    el.slider.addEventListener('input', () => { this.pause(true); this.setFrame(+el.slider.value, true); });
+    el.speed.addEventListener('change', () => { this.speed = +el.speed.value; });
+    el.mListen.addEventListener('click', () => this.setMode('listen'));
+    el.mExplore.addEventListener('click', () => this.setMode('explore'));
+    this.panel.addEventListener('keydown', e => this.onKey(e));
+  };
+
+  P.onKey = function (e) {
+    const tag = (e.target.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'select' || tag === 'textarea') return;
+    const isButton = tag === 'button' || tag === 'summary';
+    const step = EBE.config.sound.cursorStepDeg * (e.shiftKey ? 3 : 1);
+    switch (e.key) {
+      case ' ':
+        if (isButton) return;
+        e.preventDefault(); this.playing ? this.pause() : this.play(); break;
+      case 'Enter':
+        if (isButton) return;
+        e.preventDefault(); this.describe(); break;
+      case 'm': case 'M':
+        e.preventDefault(); this.setMode(this.mode === 'listen' ? 'explore' : 'listen'); break;
+      case 'ArrowLeft':
+        e.preventDefault();
+        if (this.mode === 'explore') this.moveCursor(this.cursor.lon - step, this.cursor.lat, false);
+        else { this.pause(true); this.setFrame(this.k - 1, true); }
+        break;
+      case 'ArrowRight':
+        e.preventDefault();
+        if (this.mode === 'explore') this.moveCursor(this.cursor.lon + step, this.cursor.lat, false);
+        else { this.pause(true); this.setFrame(this.k + 1, true); }
+        break;
+      case 'ArrowUp':
+        if (this.mode !== 'explore') return;
+        e.preventDefault(); this.moveCursor(this.cursor.lon, this.cursor.lat + step, false); break;
+      case 'ArrowDown':
+        if (this.mode !== 'explore') return;
+        e.preventDefault(); this.moveCursor(this.cursor.lon, this.cursor.lat - step, false); break;
+      default:
+    }
+  };
+
+  // ---------- lifecycle ----------
+  P.activate = function () {
+    if (!this.built) this.build();
+    this.active = true;
+    if (this.ds) { this.render(); this.startScene(); return; }
+    this.el.status.textContent = t('common.loading');
+    EBE.data.load(this.id).then(ds => {
+      this.ds = ds;
+      this.inst = EBE.instruments.create(this.cfg.instrument);
+      this.el.status.textContent = '';
+      this.el.slider.max = String(ds.frames.length - 1);
+      this.k = ds.frames.length - 1;   // start on the most recent frame
+      this.render();
+      if (this.active) this.startScene();
+    }).catch(err => {
+      console.error(err);
+      if (!this.ds) this.el.status.textContent = t('common.loadError');
+    });
+  };
+
+  P.deactivate = function () {
+    this.active = false;
+    this.pause(true);
+    EBE.audio.setScene(null);
+  };
+
+  P.onLangChange = function () {
+    if (!this.built) return;
+    EBE.i18n.apply(this.panel);
+    if (this.ds) this.render();
+  };
+
+  // ---------- frames ----------
+  P.frame = function () { return this.ds.frames[this.k]; };
+
+  P.setFrame = function (k, announce) {
+    if (!this.ds) return;
+    const n = this.ds.frames.length;
+    this.k = ((k % n) + n) % n;
+    this.render();
+    if (this.mode === 'explore') this.updateNear();
+    if (announce) EBE.a11y.announce(this.describeText());
+  };
+
+  P.play = function () {
+    if (!this.ds) return;
+    if (!EBE.audio.isOn()) { EBE.audio.enable(); }
+    if (this.mode !== 'listen') this.setMode('listen');
+    this.playing = true;
+    this.updatePlayButton();
+    this.el.desc.setAttribute('aria-live', 'off');
+    const stepMs = () => EBE.config.sound.frameSeconds * 1000 / this.speed;
+    const tick = () => {
+      if (!this.playing) return;
+      this.setFrame(this.k + 1, false);
+      this.timer = setTimeout(tick, stepMs());
+    };
+    clearTimeout(this.timer);
+    this.timer = setTimeout(tick, stepMs());
+    this.startScene();
+  };
+
+  P.pause = function (silent) {
+    const was = this.playing;
+    this.playing = false;
+    clearTimeout(this.timer);
+    if (this.el) { this.updatePlayButton(); this.el.desc.setAttribute('aria-live', 'polite'); }
+    if (was && !silent) EBE.a11y.announce(this.describeText());
+  };
+
+  P.updatePlayButton = function () {
+    const label = this.playing ? t('common.pause') : t('common.play');
+    this.el.play.setAttribute('aria-label', label);
+    this.el.play.setAttribute('aria-pressed', this.playing ? 'true' : 'false');
+    this.el.playIcon.textContent = this.playing ? '⏸' : '▶';
+  };
+
+  P.setMode = function (mode) {
+    if (this.mode === mode) return;
+    this.mode = mode;
+    if (mode === 'explore') this.pause(true);
+    this.el.mListen.setAttribute('aria-pressed', mode === 'listen' ? 'true' : 'false');
+    this.el.mExplore.setAttribute('aria-pressed', mode === 'explore' ? 'true' : 'false');
+    this.map.setInteractive(mode === 'explore');
+    this.render();
+    if (mode === 'explore') { this.updateNear(); this.el.map.focus(); }
+    this.startScene();
+    EBE.a11y.announce(t(mode === 'listen' ? 'common.listenHelp' : 'common.exploreHelp'));
+  };
+
+  // ---------- text ----------
+  P.fmtValue = function (v) {
+    const c = this.cfg, units = this.ds.units;
+    return (c.signed && v > 0 ? '+' : '') + EBE.i18n.num(v, c.decimals || 0) + ' ' + units;
+  };
+  P.fmtShare = function (x) { return EBE.i18n.num(100 * x, 0) + '%'; };
+
+  P.statValue = function (key, s) {
+    switch (key) {
+      case 'count': return EBE.i18n.num(s.count, 0);
+      case 'meanIntensity': {
+        const [v0, v1] = this.ds.value_range; return this.fmtValue(v0 + s.meanIntensity * (v1 - v0));
+      }
+      case 'mean': return this.fmtValue(s.mean);
+      case 'meanWhere': return this.fmtValue(s.meanWhere);
+      case 'shareAbove': return this.fmtShare(s.shareAbove);
+      case 'maxPlace': return s.max ? this.fmtValue(s.max.value) + ', ' + EBE.geo.placeName(s.max.lon, s.max.lat, this.cfg.preferOcean) : '—';
+      default: return '';
+    }
+  };
+
+  P.describeText = function () {
+    if (!this.ds) return '';
+    const fr = this.frame(), s = fr.summary;
+    return t(this.id + '.desc', {
+      date: EBE.i18n.date(fr.t),
+      count: s.count !== undefined ? EBE.i18n.num(s.count, 0) : '',
+      level: t(levelKey(fr.rank)),
+      place: s.max ? EBE.geo.placeName(s.max.lon, s.max.lat, this.cfg.preferOcean) : '—',
+      mean: s.mean !== undefined ? this.fmtValue(s.mean) : '',
+      share: s.shareAbove !== undefined ? this.fmtShare(s.shareAbove) : '',
+      max: s.max ? this.fmtValue(s.max.value) : ''
+    });
+  };
+
+  P.render = function () {
+    if (!this.ds) return;
+    const ds = this.ds, fr = this.frame(), el = this.el, n = ds.frames.length;
+    el.badge.textContent = ds.simulated ? t('common.simulated') : t('common.real');
+    el.badge.classList.toggle('sim', !!ds.simulated);
+    el.slider.value = String(this.k);
+    el.slider.setAttribute('aria-valuetext', EBE.i18n.date(fr.t) + ' · ' + t('common.frameOf', { n: this.k + 1, total: n }));
+    el.date.textContent = EBE.i18n.date(fr.t);
+    this.updatePlayButton();
+    el.stats.innerHTML = '';
+    this.cfg.stats.forEach(([key, label]) => {
+      const dt = document.createElement('dt'); dt.textContent = t(this.id + '.stat.' + label);
+      const dd = document.createElement('dd'); dd.textContent = this.statValue(key, fr.summary);
+      el.stats.appendChild(dt); el.stats.appendChild(dd);
+    });
+    const lk = levelKey(fr.rank);
+    el.level.textContent = t('common.level') + ': ' + t(lk);
+    el.level.dataset.level = lk.split('.')[1];
+    const text = this.describeText();
+    el.desc.textContent = text;
+    el.alt.textContent = text;
+    this.map.setImage(fr.image || null, text);
+    this.map.setPoints(ds.type === 'points' ? fr.points : null);
+    this.map.setCursor(this.cursor.lon, this.cursor.lat, this.mode === 'explore', ds.type === 'points' ? EBE.config.sound.exploreRadiusKm : 0);
+    el.help.textContent = t(this.mode === 'listen' ? 'common.listenHelp' : 'common.exploreHelp');
+    // Preload the next image.
+    const next = ds.frames[(this.k + 1) % n];
+    if (next.image) { const im = new Image(); im.src = next.image; }
+    if (this.mode === 'explore') this.updateReadout(true);
+    else el.readout.textContent = '';
+  };
+
+  // ---------- Explore ----------
+  P.moveCursor = function (lon, lat, fromPointer) {
+    if (this.mode !== 'explore') this.setMode('explore');
+    let lo = lon; if (lo > 180) lo -= 360; if (lo < -180) lo += 360;
+    this.cursor = { lon: lo, lat: clamp(lat, -89, 89) };
+    this.map.setCursor(this.cursor.lon, this.cursor.lat, true, this.ds && this.ds.type === 'points' ? EBE.config.sound.exploreRadiusKm : 0);
+    this.updateNear();
+    this.updateReadout(!fromPointer);
+  };
+
+  P.updateNear = function () {
+    if (!this.ds) return;
+    const c = this.cursor, ds = this.ds, fr = this.frame();
+    if (ds.type === 'points') {
+      const R = EBE.config.sound.exploreRadiusKm;
+      let best = null, bd = Infinity, S = 0; const list = [], w = [];
+      for (const p of fr.points) {
+        if (Math.abs(p[1] - c.lat) > 25 && bd < 3000) continue;
+        const d = EBE.geo.haversineKm(c.lat, c.lon, p[1], p[0]);
+        if (d < bd) { bd = d; best = p; }
+        if (d < R) { const x = Math.pow(1 - d / R, 2) * (0.3 + 0.7 * p[2]); S += x; list.push({ p, d }); w.push(x); }
+      }
+      this.near = { best, d: bd, S, list, cum: EBE.data.cumulative(w), b: best ? EBE.geo.bearing(c.lat, c.lon, best[1], best[0]) : 0 };
+    } else {
+      const v = EBE.data.valueAt(ds, fr, c.lon, c.lat);
+      this.near = { value: v, intensity: v === null ? 0 : ds.intensityOf(v) };
+    }
+  };
+
+  P.readoutText = function () {
+    const c = this.cursor, near = this.near, ds = this.ds;
+    if (!near) return '';
+    const place = EBE.geo.placeName(c.lon, c.lat, this.cfg.preferOcean);
+    if (ds.type === 'points') {
+      const R = EBE.config.sound.exploreRadiusKm;
+      if (!near.best) return t('fire.exploreNone');
+      if (near.d < 40) return t('fire.exploreOn', { place, count: EBE.i18n.num(near.list.length), km: R });
+      return t('fire.exploreNear', { count: EBE.i18n.num(near.list.length), km: R, dist: EBE.i18n.num(near.d), dir: EBE.geo.dir8(near.b) }) + ' ' + t('common.cursorAt', { place });
+    }
+    if (near.value === null) return t('common.noData') + ' · ' + place;
+    return this.fmtValue(near.value) + ' · ' + place;
+  };
+
+  P.updateReadout = function (force) {
+    const now = Date.now();
+    if (!force && now - this.lastReadout < 1200) return;
+    this.lastReadout = now;
+    this.el.readout.textContent = this.readoutText();
+  };
+
+  P.describe = function () {
+    if (!this.ds) return;
+    const text = this.mode === 'explore' ? this.readoutText() : this.describeText();
+    EBE.a11y.announce(text);
+    if (!EBE.a11y.readAloud()) EBE.a11y.speak(text);
+  };
+
+  // ---------- sound ----------
+  P.startScene = function () {
+    if (!this.ds || !this.inst || !this.active) return;
+    const self = this, inst = this.inst;
+    let nextEvent = 0, nextPing = 0;
+    EBE.audio.setScene({
+      // The bed starts on the first tick, when the audio context surely exists.
+      tick(now, until) { inst.startBed(); self.mode === 'listen' ? self.tickListen(now, until, () => nextEvent, v => { nextEvent = v; })
+                                               : self.tickExplore(now, until, () => nextEvent, v => { nextEvent = v; }, () => nextPing, v => { nextPing = v; }); },
+      stop() { inst.stopBed(); }
+    });
+  };
+
+  P.tickListen = function (now, until, getNext, setNext) {
+    const ds = this.ds, fr = this.frame(), rank = fr.rank;
+    const playing = this.playing;
+    const level = playing ? 0.25 + 0.7 * rank : 0.12 + 0.3 * rank;
+    this.inst.setBed({ level, bright: rank, pan: 0, pitch: rank });
+    EBE.audio.setAlert(playing ? smooth(0.5, 1, rank) : 0);
+    const rate = (playing ? 2 : 0.6) + (playing ? 38 : 8) * Math.pow(rank, 1.1);
+    let next = getNext();
+    if (next < now) next = now + 0.02;
+    while (next < until) {
+      const ev = EBE.data.sampleEvent(ds, fr);
+      if (ev) {
+        const ok = this.inst.hit(next, { intensity: ev.intensity, pan: 0.9 * ev.lon / 180, pitch: 0.15 + 0.8 * ev.intensity });
+        if (ok) this.scheduleFlash(next, ev);
+      }
+      next += -Math.log(1 - Math.random()) / rate;
+    }
+    setNext(next);
+  };
+
+  P.tickExplore = function (now, until, getNext, setNext, getPing, setPing) {
+    const ds = this.ds, near = this.near, c = this.cursor;
+    if (!near) return;
+    if (ds.type === 'points') {
+      const S = near.S || 0;
+      this.inst.setBed({ level: Math.min(1, S / 4), bright: Math.min(1, S / 6), pan: 0, pitch: 0.5 });
+      EBE.audio.setAlert(near.d < 40 ? 0.6 : 0);
+      // Sonar pings: faster when the nearest fire is close; pitch tells north/south, pan tells east/west.
+      let ping = getPing();
+      if (ping < now) ping = now + 0.05;
+      while (ping < until) {
+        this.ping(ping);
+        ping += near.best ? (near.d <= 30 ? 0.12 : 0.12 + 1.5 * Math.pow(clamp((near.d - 30) / 1500, 0, 1), 0.7)) : 2;
+      }
+      setPing(ping);
+      const rate = S > 0 ? Math.min(90, 25 * Math.sqrt(S)) : 0;
+      let next = getNext();
+      if (next < now) next = now + 0.02;
+      if (rate > 0) {
+        while (next < until) {
+          const k = EBE.data.pick(near.cum);
+          if (k >= 0) {
+            const { p, d } = near.list[k];
+            const R = EBE.config.sound.exploreRadiusKm;
+            const ev = { lon: p[0], lat: p[1], intensity: clamp(0.15 + 0.85 * (1 - d / R) * (0.4 + 0.6 * p[2]), 0, 1) };
+            const pan = 0.9 * Math.sin(EBE.geo.bearing(c.lat, c.lon, p[1], p[0]));
+            if (this.inst.hit(next, { intensity: ev.intensity, pan })) this.scheduleFlash(next, ev);
+          }
+          next += -Math.log(1 - Math.random()) / rate;
+        }
+      } else next = until;
+      setNext(next);
+      return;
+    }
+    // Fields: the instrument plays the value under the finger.
+    const pan = 0.9 * c.lon / 180, pitch = (c.lat + 90) / 180;
+    if (near.value === null) {
+      this.inst.setBed({ level: 0, bright: 0, pan, pitch });
+      EBE.audio.setAlert(0);
+      setNext(until);
+      return;
+    }
+    const it = near.intensity;
+    this.inst.setBed({ level: 0.25 + 0.75 * it, bright: it, pan, pitch });
+    EBE.audio.setAlert(smooth(0.6, 1, it));
+    const rate = 0.6 + 14 * it;
+    let next = getNext();
+    if (next < now) next = now + 0.02;
+    while (next < until) {
+      this.inst.hit(next, { intensity: clamp(it * (0.85 + 0.3 * Math.random()), 0, 1), pan, pitch });
+      next += -Math.log(1 - Math.random()) / rate;
+    }
+    setNext(next);
+  };
+
+  P.ping = function (t) {
+    const ctx = EBE.audio.ctx(), near = this.near;
+    if (!EBE.audio.allowEvent()) return;
+    const o = ctx.createOscillator(); o.type = 'sine';
+    const north = near.best ? Math.cos(near.b) : 0, east = near.best ? Math.sin(near.b) : 0;
+    o.frequency.value = near.best ? 523.25 * Math.pow(2, 0.6 * north) : 300;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(near.best ? 0.1 : 0.04, t + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
+    o.connect(g); EBE.audio.out(g, 0.9 * east);
+    o.start(t); o.stop(t + 0.12); EBE.audio.trackVoice(o, t + 0.12);
+  };
+
+  P.scheduleFlash = function (time, ev) {
+    const delay = Math.max(0, (time - EBE.audio.now()) * 1000);
+    setTimeout(() => this.map.flash(ev.lon, ev.lat, ev.intensity), delay);
+  };
+
+  EBE.PhenomenonTab = PhenomenonTab;
+})();

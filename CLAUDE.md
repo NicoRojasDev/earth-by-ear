@@ -223,7 +223,7 @@ Qué es Earth by Ear, cómo se traduce cada dato en sonido, de dónde salen los 
 - [x] P0 · Repo creado y estructura armada. Repo: https://github.com/NicoRojasDev/earth-by-ear · App: https://nicorojasdev.github.io/earth-by-ear/ · Carpeta local: `C:\Users\juans\Documents\earth-by-ear` (fuera de OneDrive a propósito).
 - [x] P1 · Clave de FIRMS verificada y fechas disponibles (`scripts/check_firms.py`, sábado 13:04).
 - [x] P2 · Auditoría de datos de los 5 fenómenos (`pitch/data-audit.md`): los 5 entran. MVP = `fire` + `ocean` + `rain`; después `air` y `smoke`.
-- [ ] P3 · Esqueleto web (archivos, pestañas, bilingüe EN/ES, configuración).
+- [x] P3 · Esqueleto web (archivos, pestañas, bilingüe EN/ES, configuración). La pestaña de fenómeno ya es genérica (puntos y campos, Listen y Explore) y `fire` usa datos **simulados** en el formato final hasta el P4. Probado en Chrome sin interfaz: 0 errores de consola.
 - [ ] P4 · Pipeline genérico con datos reales de `fire` y `ocean`.
 - [ ] P5 · Pestaña de fenómeno genérica (imagen real + Listen + Explore).
 - [ ] P6 · Instrumentos y mezcla.
