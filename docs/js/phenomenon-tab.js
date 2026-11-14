@@ -5,6 +5,7 @@
   const EBE = window.EBE = window.EBE || {};
   const t = (k, p) => EBE.i18n.t(k, p);
   const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+  const noCoords = s => s.replace(/\s*\([^)]*°[^)]*\)/g, '');   // spoken text: no coordinates
   const smooth = (a, b, x) => { const u = clamp((x - a) / (b - a), 0, 1); return u * u * (3 - 2 * u); };
 
   function levelKey(rank) {
@@ -38,6 +39,10 @@
             <div class="map-wrap" data-el="map" tabindex="0" role="application" data-i18n-aria="common.mapLabel"></div>
             <figcaption class="sr-only" data-el="alt"></figcaption>
           </figure>
+          <div class="blind-bar">
+            <button type="button" class="btn big" data-el="bPlay"><span aria-hidden="true" data-el="bPlayIcon">▶</span> <span data-el="bPlayLabel"></span></button>
+            <button type="button" class="btn big" data-el="bWhere"><span aria-hidden="true">🔊</span> <span data-i18n="blind.where"></span></button>
+          </div>
           <div class="timeline" role="group" data-i18n-aria="common.timeline">
             <button type="button" class="btn icon" data-el="prev" data-i18n-aria="common.prev"><span aria-hidden="true">⏮</span></button>
             <button type="button" class="btn icon primary" data-el="play"><span aria-hidden="true" data-el="playIcon">▶</span></button>
@@ -79,7 +84,11 @@
       </div>`;
     this.el = {};
     this.panel.querySelectorAll('[data-el]').forEach(e => { this.el[e.dataset.el] = e; });
-    this.map = new EBE.MapView(this.el.map, { onPointer: (lon, lat) => this.moveCursor(lon, lat, true) });
+    this.updatePlayButton();
+    this.map = new EBE.MapView(this.el.map, {
+      onPointer: (lon, lat) => this.moveCursor(lon, lat, true),
+      onPointerEnd: () => this.onPointerEnd()
+    });
     this.bind();
     EBE.i18n.apply(this.panel);
     this.built = true;
@@ -94,6 +103,8 @@
     el.speed.addEventListener('change', () => { this.speed = +el.speed.value; });
     el.mListen.addEventListener('click', () => this.setMode('listen'));
     el.mExplore.addEventListener('click', () => this.setMode('explore'));
+    el.bPlay.addEventListener('click', () => { this.playing ? this.pause() : this.play(); });
+    el.bWhere.addEventListener('click', () => this.describe());
     this.panel.addEventListener('keydown', e => this.onKey(e));
   };
 
@@ -135,7 +146,7 @@
   P.activate = function () {
     if (!this.built) this.build();
     this.active = true;
-    if (this.ds) { this.render(); this.startScene(); return; }
+    if (this.ds) { this.blindExplore(); this.render(); this.startScene(); return; }
     this.el.status.textContent = t('common.loading');
     EBE.data.load(this.id).then(ds => {
       this.ds = ds;
@@ -143,6 +154,7 @@
       this.el.status.textContent = '';
       this.el.slider.max = String(ds.frames.length - 1);
       this.k = ds.frames.length - 1;   // start on the most recent frame
+      if (this.active) this.blindExplore();
       this.render();
       if (this.active) this.startScene();
     }).catch(err => {
@@ -206,9 +218,16 @@
     this.el.play.setAttribute('aria-label', label);
     this.el.play.setAttribute('aria-pressed', this.playing ? 'true' : 'false');
     this.el.playIcon.textContent = this.playing ? '⏸' : '▶';
+    this.el.bPlayIcon.textContent = this.playing ? '⏸' : '▶';
+    this.el.bPlayLabel.textContent = t(this.playing ? 'blind.pause' : 'blind.play');
   };
 
-  P.setMode = function (mode) {
+  // In blind mode every phenomenon opens in Explore (quietly: the mode intro already explains it).
+  P.blindExplore = function () {
+    if (EBE.a11y.isBlind() && this.mode !== 'explore') this.setMode('explore', true);
+  };
+
+  P.setMode = function (mode, quiet) {
     if (this.mode === mode) return;
     // Explore only makes sense with sound: switching to it is a user gesture, so sound can start here.
     if (mode === 'explore' && !EBE.audio.isOn()) EBE.audio.enable();
@@ -219,6 +238,7 @@
     this.map.setInteractive(mode === 'explore');
     if (mode === 'explore') this.updateNear();
     this.render();
+    if (quiet) { this.startScene(); return; }
     if (mode === 'explore') this.el.map.focus();
     this.startScene();
     EBE.a11y.announce(t(mode === 'listen' ? 'common.listenHelp' : 'common.exploreHelp'));
@@ -290,7 +310,8 @@
     this.map.setImage(fr.image || null, text);
     this.map.setPoints(ds.type === 'points' ? fr.points : null);
     this.map.setCursor(this.cursor.lon, this.cursor.lat, this.mode === 'explore', ds.type === 'points' ? EBE.config.sound.exploreRadiusKm : 0);
-    el.help.textContent = t(this.mode === 'listen' ? 'common.listenHelp' : 'common.exploreHelp');
+    el.help.textContent = t(this.mode === 'listen' ? 'common.listenHelp' : 'common.exploreHelp') +
+      (EBE.a11y.isBlind() && this.mode === 'explore' ? ' ' + t('mode.srTip') : '');
     // Preload the next image.
     const next = ds.frames[(this.k + 1) % n];
     if (next.image) { const im = new Image(); im.src = next.image; }
@@ -307,6 +328,33 @@
     this.map.setCursor(this.cursor.lon, this.cursor.lat, true, this.ds && this.ds.type === 'points' ? EBE.config.sound.exploreRadiusKm : 0);
     this.updateNear();
     this.updateReadout(!fromPointer);
+    if (EBE.a11y.isBlind()) this.sayRegion();
+  };
+
+  // Blind mode: say the continent or ocean when the finger enters a new one. The name must hold for
+  // a moment, so a quick swipe across a coast does not make the voice stutter.
+  P.sayRegion = function () {
+    const key = EBE.geo.regionKey(this.cursor.lon, this.cursor.lat);
+    if (key === this.pendingRegion) return;            // same new place: keep waiting
+    clearTimeout(this.regionTimer);
+    this.pendingRegion = key;
+    if (key === this.lastRegion) return;
+    this.regionTimer = setTimeout(() => {
+      this.pendingRegion = null;
+      if (!this.active || this.mode !== 'explore' || key === this.lastRegion) return;
+      this.lastRegion = key;
+      EBE.a11y.speak(t('region.' + key), null, { light: true });
+    }, 250);
+  };
+
+  // Blind mode: lifting the finger says the value and the place in full (without coordinates).
+  P.onPointerEnd = function () {
+    if (!EBE.a11y.isBlind() || this.mode !== 'explore' || !this.ds) return;
+    clearTimeout(this.regionTimer); this.pendingRegion = null;
+    this.lastRegion = EBE.geo.regionKey(this.cursor.lon, this.cursor.lat);
+    const region = t('region.' + this.lastRegion);
+    const text = noCoords(this.readoutText());
+    EBE.a11y.speak(text.includes(region) ? text : region + '. ' + text);
   };
 
   P.updateNear = function () {
@@ -362,7 +410,8 @@
 
   P.describe = function () {
     if (!this.ds) return;
-    const text = this.mode === 'explore' ? this.readoutText() : this.describeText();
+    const raw = this.mode === 'explore' ? this.readoutText() : this.describeText();
+    const text = EBE.a11y.isBlind() ? noCoords(raw) : raw;
     EBE.a11y.announce(text);
     if (!EBE.a11y.readAloud()) EBE.a11y.speak(text);
   };

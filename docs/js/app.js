@@ -1,5 +1,6 @@
 // Written with the assistance of Claude (Anthropic) for NASA Space Apps 2026.
-// App start-up: ARIA tabs, header controls (sound, read aloud, language), About panel, deep links.
+// App start-up: welcome screen (standard or blind mode), ARIA tabs, header controls (mode, sound,
+// read aloud, language), About panel, deep links.
 (function () {
   'use strict';
   const EBE = window.EBE = window.EBE || {};
@@ -74,6 +75,8 @@
     if (!tab.built && tab.controller.build && !(tab.controller instanceof EBE.PhenomenonTab)) { tab.controller.build(tab.panel); tab.built = true; }
     tab.controller.activate();
     if (focusTab) tab.button.focus();
+    if (focusTab && EBE.a11y.isBlind()) sayTopic(tab);
+    $('#tb-name').textContent = t('tab.' + tab.id);
     if (location.hash !== '#' + tab.id) history.replaceState(null, '', '#' + tab.id);
   }
 
@@ -100,6 +103,60 @@
     document.querySelectorAll('[data-lang]').forEach(b => b.setAttribute('aria-pressed', b.dataset.lang === EBE.i18n.getLang() ? 'true' : 'false'));
   }
 
+  function sayTopic(tab) {
+    const name = t('tab.' + tab.id);
+    EBE.a11y.speak(tab.controller instanceof EBE.PhenomenonTab ? t('mode.tabIntro', { tab: name }) : name);
+  }
+
+  // Blind mode: big previous / next topic buttons (every tab except About).
+  function stepTopic(d) {
+    const list = tabs.filter(x => x.id !== 'about');
+    const i = Math.max(0, list.indexOf(current));
+    const tab = list[(i + d + list.length) % list.length];
+    select(tab.id, false);
+    sayTopic(tab);
+  }
+
+  function setVoice(on) {
+    $('#btn-voice').setAttribute('aria-pressed', on ? 'true' : 'false');
+    EBE.a11y.setReadAloud(on);
+  }
+
+  function updateModeButton() {
+    const blind = EBE.a11y.isBlind();
+    $('#btn-mode [data-mode-icon]').textContent = blind ? '🔊' : '👁';
+    $('#btn-mode [data-mode-label]').textContent = t(blind ? 'mode.btnBlind' : 'mode.btnStandard');
+  }
+
+  // Welcome screen: shown at every visit and from the Mode button.
+  function showWelcome() {
+    if (current) current.controller.deactivate();
+    EBE.a11y.stopSpeaking();
+    document.body.classList.add('choosing');
+    $('#welcome').hidden = false; $('#main').hidden = true;   // only one visible <main>
+    let last = null;
+    try { last = localStorage.getItem('ebe.mode'); } catch (e) { /* ignore */ }
+    const btn = last && document.querySelector('.choice-big[data-mode="' + last + '"]');
+    (btn || $('#welcome-title')).focus();
+  }
+
+  function chooseMode(mode) {
+    const blind = mode === 'blind';
+    try { localStorage.setItem('ebe.mode', mode); } catch (e) { /* ignore */ }
+    EBE.a11y.setBlind(blind);
+    document.body.classList.toggle('blind', blind);
+    document.body.classList.remove('choosing');
+    $('#welcome').hidden = true; $('#main').hidden = false;
+    // The choice is a tap, so sound (and speech on iPhone) can start now.
+    if (!EBE.audio.isOn()) EBE.audio.enable();
+    setVoice(blind);
+    updateModeButton(); updateSoundButton();
+    select(current ? current.id : tabs[0].id, false);
+    (blind ? $('#tb-name') : current.button).focus();
+    if (blind) EBE.a11y.speak(t('mode.blindIntro', { tab: t('tab.' + current.id) }));
+    else EBE.a11y.announce(t('mode.standardOn'));
+  }
+
   function init() {
     EBE.config.phenomena.filter(p => p.enabled).forEach(p => {
       const tab = makeTab(p.id, null);
@@ -120,14 +177,18 @@
 
     $('#btn-voice').addEventListener('click', e => {
       const on = e.currentTarget.getAttribute('aria-pressed') !== 'true';
-      e.currentTarget.setAttribute('aria-pressed', on ? 'true' : 'false');
-      EBE.a11y.setReadAloud(on);
+      setVoice(on);
       if (on) EBE.a11y.speak(t('header.readAloud'));
     });
 
     document.querySelectorAll('[data-lang]').forEach(b => b.addEventListener('click', () => EBE.i18n.setLang(b.dataset.lang)));
+    document.querySelectorAll('.choice-big[data-mode]').forEach(b => b.addEventListener('click', () => chooseMode(b.dataset.mode)));
+    $('#btn-mode').addEventListener('click', showWelcome);
+    $('#tb-prev').addEventListener('click', () => stepTopic(-1));
+    $('#tb-next').addEventListener('click', () => stepTopic(1));
     EBE.i18n.onChange(() => {
-      updateLangButtons(); updateSoundButton();
+      updateLangButtons(); updateSoundButton(); updateModeButton();
+      if (current) $('#tb-name').textContent = t('tab.' + current.id);
       tabs.forEach(tab => {
         if (tab.controller.onLangChange) tab.controller.onLangChange();
         else if (tab.built) EBE.i18n.apply(tab.panel);
@@ -139,8 +200,10 @@
     EBE.i18n.apply();
     updateLangButtons();
     updateSoundButton();
+    updateModeButton();
     const fromHash = location.hash.replace('#', '');
     select(tabs.some(x => x.id === fromHash) ? fromHash : tabs[0].id, false);
+    showWelcome();
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);

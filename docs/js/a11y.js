@@ -5,6 +5,7 @@
   const EBE = window.EBE = window.EBE || {};
 
   let readAloud = false;
+  let blind = false;      // blind / low-vision mode chosen on the welcome screen
   let liveEl = null;
   let lastText = '';
   let lastTime = 0;
@@ -40,8 +41,9 @@
     return null;
   }
 
-  // Speak text in the active language. The data sound is ducked while the voice talks.
-  function speak(text, onEnd) {
+  // Speak text in the active language. The data sound is ducked while the voice talks
+  // (only a little with opts.light, used for short place names while exploring).
+  function speak(text, onEnd, opts) {
     if (!('speechSynthesis' in window) || !text) { if (onEnd) onEnd(); return; }
     const lang = EBE.i18n.getLang();
     const u = new SpeechSynthesisUtterance(text);
@@ -59,7 +61,7 @@
     // Safety: some browsers never fire onend.
     setTimeout(finish, 1500 + text.length * 90);
     window.speechSynthesis.cancel();
-    if (EBE.audio) EBE.audio.duck(true);
+    if (EBE.audio) EBE.audio.duck(true, opts && opts.light ? 0.7 : 0.35);
     window.speechSynthesis.speak(u);
   }
 
@@ -78,6 +80,8 @@
   EBE.a11y = {
     announce, speak, stopSpeaking, reducedMotion,
     setReadAloud: on => { readAloud = !!on; if (!on) stopSpeaking(); },
-    readAloud: () => readAloud
+    readAloud: () => readAloud,
+    setBlind: on => { blind = !!on; },
+    isBlind: () => blind
   };
 })();

@@ -137,3 +137,49 @@ textarea { width: 100%; background: var(--panel-2); color: var(--text); border: 
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+
+/* Welcome: choose standard or blind / low-vision mode */
+.welcome { display: none; }
+body.choosing > header, body.choosing > main, body.choosing > footer, body.choosing > .skip { display: none; }
+body.choosing .welcome { display: flex; flex-direction: column; gap: 10px; min-height: 100vh; min-height: 100dvh; padding: 20px 0 16px; }
+.welcome h1 { font-size: clamp(2rem, 7vw, 3rem); margin: 0; }
+.welcome h1:focus { outline: none; }
+.welcome-lead { margin: 0; color: var(--muted); font-size: 1.1rem; max-width: 60ch; }
+.welcome-q { margin: 10px 0 2px; font-size: 1.35rem; color: var(--text); }
+.welcome-choices { flex: 1; display: grid; grid-template-rows: 1fr 1fr; gap: 14px; min-height: 380px; }
+@media (min-width: 800px) { .welcome-choices { grid-template-rows: none; grid-template-columns: 1fr 1fr; flex: 0 0 auto; min-height: 340px; } }
+.choice-big {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  padding: 20px; border-radius: 20px; border: 2px solid var(--accent); background: var(--panel);
+  color: var(--text); font: inherit; text-align: center; cursor: pointer;
+}
+.choice-big:hover { background: var(--panel-2); }
+.choice-big.blind { border-color: var(--accent-2); background: #241a08; }
+.choice-big.blind:hover { background: #33250b; }
+.choice-big .ico { font-size: 3.2rem; line-height: 1; }
+.choice-big .ttl { font-size: 1.55rem; font-weight: 800; }
+.choice-big .sub { font-size: 1.1rem; color: var(--muted); max-width: 32ch; }
+.welcome-lang { display: flex; align-items: center; justify-content: center; gap: 10px; color: var(--muted); }
+
+/* Blind / low-vision mode: bigger text and controls */
+body.blind { font-size: 1.12rem; }
+body.blind .btn { min-height: 52px; }
+
+/* Blind mode: only the essentials, big and always in the same place.
+   Top: previous topic / topic name / next topic. Middle: the map. Bottom: listen over time, where am I. */
+.topicbar, .blind-bar { display: none; }
+body.blind .tabbar, body.blind .foot, body.blind .skip,
+body.blind #btn-sound, body.blind #btn-voice, body.blind .controls .lang, body.blind .tagline, body.blind .intro,
+body.blind .ph-head, body.blind .lead, body.blind .timeline, body.blind .modes, body.blind .help, body.blind .keys,
+body.blind .ph-side { display: none; }
+body.blind .top { grid-template-columns: 1fr auto; padding: 8px 0 0; }
+body.blind .top h1 { font-size: 1.35rem; }
+body.blind .topicbar { display: grid; grid-template-columns: 76px 1fr 76px; gap: 8px; align-items: center; margin: 6px 0 10px; }
+body.blind .topicbar .btn { min-height: 76px; font-size: 1.9rem; padding: 0; }
+body.blind .tb-name { margin: 0; text-align: center; font-size: 1.6rem; color: var(--text); }
+body.blind .tb-name:focus { outline: none; }
+body.blind .ph-grid { display: block; }
+body.blind .map { aspect-ratio: auto; height: 56vh; height: 56dvh; }
+body.blind .blind-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+body.blind .blind-bar .btn { min-height: 76px; font-size: 1.2rem; }
+body.blind .readout { font-size: 1.15rem; min-height: 1.5em; }

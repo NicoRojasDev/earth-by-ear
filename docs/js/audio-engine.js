@@ -96,9 +96,9 @@
     alertRumble.gain.setTargetAtTime(0.35 * x, t, 0.6);
   }
 
-  function duck(down) {
+  function duck(down, level) {
     if (!ctx) return;
-    duckGain.gain.setTargetAtTime(down ? 0.35 : 1, ctx.currentTime, 0.08);
+    duckGain.gain.setTargetAtTime(down ? (level || 0.35) : 1, ctx.currentTime, 0.08);
   }
 
   // Budget: returns false when too many events or voices are playing.

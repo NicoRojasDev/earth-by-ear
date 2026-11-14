@@ -10,8 +10,34 @@
 <meta name="theme-color" content="#0b1220">
 <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
+<body class="choosing">
 <a class="skip" href="#main" data-i18n="header.skip">Skip to content</a>
+
+<!-- Welcome: choose standard or blind / low-vision mode before using the app. -->
+<main id="welcome" class="welcome" aria-labelledby="welcome-title">
+  <h1 id="welcome-title" tabindex="-1"><span aria-hidden="true">🌍</span> Earth by Ear</h1>
+  <p class="welcome-lead" data-i18n="welcome.lead"></p>
+  <h2 class="welcome-q" data-i18n="welcome.question"></h2>
+  <div class="welcome-choices">
+    <button type="button" class="choice-big" data-mode="standard">
+      <span class="ico" aria-hidden="true">👁</span>
+      <span class="ttl" data-i18n="mode.standard"></span>
+      <span class="sub" data-i18n="mode.standardSub"></span>
+    </button>
+    <button type="button" class="choice-big blind" data-mode="blind">
+      <span class="ico" aria-hidden="true">🔊</span>
+      <span class="ttl" data-i18n="mode.blind"></span>
+      <span class="sub" data-i18n="mode.blindSub"></span>
+    </button>
+  </div>
+  <div class="welcome-lang">
+    <span data-i18n="header.language"></span>
+    <div class="lang" role="group" data-i18n-aria="header.language">
+      <button type="button" class="btn" data-lang="en" lang="en" aria-label="EN, English">EN</button>
+      <button type="button" class="btn" data-lang="es" lang="es" aria-label="ES, Español">ES</button>
+    </div>
+  </div>
+</main>
 
 <header class="top">
   <div class="brand">
@@ -21,6 +47,9 @@
   <div class="controls">
     <button type="button" id="btn-sound" class="btn big sound" aria-pressed="false">
       <span aria-hidden="true">🔊</span> <span data-label></span>
+    </button>
+    <button type="button" id="btn-mode" class="btn">
+      <span aria-hidden="true" data-mode-icon>👁</span> <span data-mode-label></span>
     </button>
     <button type="button" id="btn-voice" class="btn" aria-pressed="false">
       <span aria-hidden="true">🗣</span> <span data-i18n="header.readAloud"></span>
@@ -34,7 +63,13 @@
   <p class="note" id="ios-note" data-i18n="header.iosNote" hidden></p>
 </header>
 
-<main id="main" tabindex="-1">
+<main id="main" tabindex="-1" hidden>
+  <!-- Blind mode: one big topic switcher instead of the tab list. -->
+  <div class="topicbar" id="topicbar">
+    <button type="button" class="btn" id="tb-prev" data-i18n-aria="blind.prevTopic"><span aria-hidden="true">◀</span></button>
+    <h2 id="tb-name" class="tb-name" tabindex="-1"></h2>
+    <button type="button" class="btn" id="tb-next" data-i18n-aria="blind.nextTopic"><span aria-hidden="true">▶</span></button>
+  </div>
   <nav class="tabbar">
     <div id="tablist" class="tablist" role="tablist" data-i18n-aria="tabs.label"></div>
   </nav>

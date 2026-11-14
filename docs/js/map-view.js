@@ -51,14 +51,14 @@
     [165, 180, -48, -33, 'New Zealand', 'Nueva Zelanda'],
     [26, 60, 50, 72, 'Russia', 'Rusia']
   ];
-  // Land/sea mask on a 2-degree grid (180 x 90 bits, row-major from 90N 180W), derived from the
+  // Land/sea mask on a 1-degree grid (360 x 180 bits, row-major from 90N 180W), derived from the
   // base map of NASA SVS 5113 (navy = ocean). Used only to name places.
-  const LAND_MASK_B64 = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHAAf+AAAAAAAAAAAAAAAAAAAAAAAA//////8AAAAAAAABAAAAAAAAAAAAAA/+f///wAA/AAAAAA8AAAAAAAAAAAwAr4f///wAAYAAAAAAGAAAAAAAAAAAPivwAf//wAAAAADAAP/4AGAAAAAAAD8338AP//gAAAAAEBD///8DAAAABgAAfw3/gH//gAAAAAEDf//////gAAP////5djwH/+AAAP/AA//////////8P//////h+H/gAAAf/z///////////Mf//////H8D8AeAA+/P///////////AP/////4A4B4AAAD5/////////////Af/////gHgA4AAAP5///////////PwAHgH///gH0AAAAAH4/////////+AIAABAD///4D+AAAAGCx/////////8A8AAAAA////n/gAAAODj/////////wA4AAAAAf///n/wAAAbH///////////AwAAAAAP/////wAAAD///////////9AAAAAAAH////4YAAAB///////////9AAAAAAAD//9/8AAAAB///////////4AAAAAAAD///f+AAAAB/f4fP//////wAAAAAAAD//9/gAAAAPxnwPP//////jAAAAAAAD////AAAAAPib//n/////+CAAAAAAAD///+AAAAAfADf/n////+MCAAAAAAAB///8AAAAAOCAP/n/////mEAAAAAAAA///8AAAAAH+AA///////E8AAAAAAAAf//wAAAAAP/gA///////hAAAAAAAAAP//gAAAAAf/73///////gAAAAAAAAAH/AwAAAAAf////f/////gAAAAAAAAAF+AQAAAAB///+/n/////AAAAAAAAAAC+AAAAAAD////f0H///+AAAAAAAAAAAeAAAAAAD////f/D///8AAAAAAAAAAAeEEAAAAD////v+B/z/AAAAAAAAAAAAPMAgAAAD////v+A/B+gAAAAAAAAAAAD8AAAAAD////34AeB/AgAAAAAAAAAAAPAAAAAD////3gAcAfAgAAAAAAAAAAADAAAAAD////+AAcAfgAAAAAAAAAAAABBwAAAD////9wAMATAQAAAAAAAAAAAAj/AAAB/////gAIAQAIAAAAAAAAAAAAH/gAAA/////gACAIAIAAAAAAAAAAAAH/8AAAYH///AAAAsGAAAAAAAAAAAAAH/+AAAAB//+AAAAUOAAAAAAAAAAAAAP/+AAAAB//8AAAAceAAAAAAAAAAAAAP//gAAAB/94AAAAMeggAAAAAAAAAAAP//8AAAB//wAAAAGcg+AAAAAAAAAAAf///AAAA//wAAAACAAPgAAAAAAAAAAP///gAAA//wAAAABwAHwAAAAAAAAAAH///AAAAf/wAAAAAAAAQAAAAAAAAAAH///AAAAf/wAAAAAAAAAAAAAAAAAAAD//+AAAA//wgAAAAABxAAAAAAAAAAAD//8AAAA//wgAAAAAPxgAAAAAAAAAAA//8AAAA//zgAAAAAf/gAAAAAAAAAAAf/8AAAA//DgAAAAAf/gAAAAAAAAAAAf/8AAAAf/DAAAAAD//4AAAAAAAAAAAf/wAAAAf/DAAAAAH//4AAAAAAAAAAAf/AAAAAf+CAAAAAH//8AAAAAAAAAAAf/AAAAAP8AAAAAAH//+AAAAAAAAAAA/+AAAAAP8AAAAAAH//+AAAAAAAAAAA/8AAAAAH4AAAAAAD//+AAAAAAAAAAA/8AAAAAHwAAAAAADwf8AAAAAAAAAAA/wAAAAAAAAAAAAACAH4AAAAAAAAAAB/wAAAAAAAAAAAAAAAD4AEAAAAAAAAB/AAAAAAAAAAAAAAAAAAAGAAAAAAAAB8AAAAAAAAAAAAAAAAAQAIAAAAAAAAB8AAAAAAAAAAAAAAAAAQAYAAAAAAAAB4AAAAAAAAAAAAAAAAAAAwAAAAAAAAB4AAAAAAAAAAAAAAAAAAAAAAAAAAAADwAAAAAAAAAAAAAAAAAAAAAAAAAAAADwAAAAAAAAAAAAAAAAAAAAAAAAAAAABwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPAAAAAAAAA+AB/////gAAAAAAAAAAAvAAAAAAABP//H//////gAAAAAAAAAD/AAAA///////////////AAAAAAAH///AAAP///////////////gAAAP//////AAA///////////////8AAB////////+AP///////////////8A////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////';
+  const LAND_MASK_B64 = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAeAAAAE//4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH///8eP////gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB////////////+AAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/////////////wAAAAASAAABQdmAAAAPwAAAAAAAAAAAAAAAAAAAAAAAAAGA////j///////+AAAAB//4AAAAAAAAAAP9gAAAAAAAAAAAAAAAAAAAAAAAeH7v//5////////8AAAAB/+AAAAAAAAAAAA/4AAAAAAAAAAAAAAAAAAAAAAdcIJxP/g////////+AAAAAPnAAAAAAAAAAAAB8AAAAAAAAAAAAAAAAAAAAAD/jD////AP////////AAAAACAAAAAAAf4AAAD//+AAAAAAAAAAAAAAAAAAAAAf/9///8AAAf//////AAAAAAAAAAAAH+AAAD////AAAB/uAAAAAAAAAAAAAAPY8AE//8AAAH/////+AAAAAAAAAAAAfAAAAP////AAAA4CAAAAAAAAAAAAAAf/A8e/f/gAAD/////8AAAAAAAAAAAB8ACAP/////+H4APAAAAAAAAAAAAAAA///5/4//4AAD/////wAAAAAAAAAAADwAHl////////8Af+AAAAAwAABAAAAAff/8O4///gAD/////wAAAAAAAAAAAHwAf/////////8///wAAABAAA//8gACAP//h8f//8AB/////4AAAAAAH/gAAA5Afv/////////////8AABAAD////P//3//n/D6/+AB/////gAAAAAB///AAwB/f//////////////////4AP/////////+Hfz4f/AAf///8AAAAAAP///4Mf/////////////////////+AH/////////////4f/4A///8AAAAAAAP///+M///////////////////////8P/////////////wD/+A///wAQYAAAAf////////////////////////////8//////////////g/+8Af//AA/+AAAA///+D///////////////////////BwP/////////////w//gAf/wAAf8AAAD/8//////////////////////////AGD////////////HYB/wAP/wAAHAAAAP///////////////////////////+AAP///////////+Aw2fAAH/AAAAAAAB//H//////////////////////////AAP///////////4AA/gAAD/AAAAAAAB//H//////////////////////3//AAAf///////////wAA/4QAAOAAAAAAAB//n//////////////////////D/8AAAB/7gD///////wAA/44AAAAAAAAAAB//h/////////////////////+DwAAAAAv8AA///////4AB//8AAAAAAAAA4A9/D///////////////////8AAPgAAAAAD8AAP///////AAf/+AAAAAAAAB8AG+n///////////////////wAAfgAAAAAeAAAH///////wAf/+AAAAAAAAA8AO+H///////////////////gAA/gAAAAB4AAAD////////g///gAAAAAAAB+APwH//////////////////+AAB/AAAAAGAAAABf///////z///4AAAAAAAP/APz////////////////////QAB/AAAAAQAAAABf///////x///8AAAAAAAPPA//////////////////////+AA8AAAAAAAAAAAn///////5///8AAAAAAAPfz///////////////////////AA4AAAAAAAAAAAD///////////8AAAAAAAMf3//////////////////////7AAwAAAAAAAAAAAD///////////sAAAAAAAAf///////////////////////7AAAAAAAAAAAAAAB//////////cfAAAAAAAAD///////////////////////7AAAAAAAAAAAAAAAf/////////wfgAAAAAAAf///////////////////////yAAAAAAAAAAAAAAAf/////B///gfgAAAAAAAP///////////////////////iAAAAAAAAAAAAAAAP//////////AgAAAAAAAD//////v/z//////////////iAAAAAAAAAAAAAAAP//////////AAAAAAAAAD/////H//n//////////////AAAAAAAAAAAAAAAAP//////v/+4AAAAAAAAAD//n/+Gf+P/////////////+HgAAAAAAAAAAAAAAf////////wgAAAAAAAAH//zz/+AH/H/////////////8HwAAAAAAAAAAAAAAf////////wAAAAAAAAAH/8N4/8AB/D/////////////QPAAAAAAAAAAAAAAAf////////wAAAAAAAAAH/4M8f/fh/i////////////8AIAAAAAAAAAAAAAAAf///////+AAAAAAAAAAH/gMPfP///x////////////8AMAAAAAAAAAAAAAAAP///////8AAAAAAAAAAP/AMGOP///x///////////fwAMAAAAAAAAAAAAAAAP///////4AAAAAAAAAAH/AAGHP///g//////////+B4AcAAAAAAAAAAAAAAAH///////wAAAAAAAAAAH+AEcHH///4///////////54B4AAAAAAAAAAAAAAAD///////wAAAAAAAAAAB8/+ACD///////////////w8D4AAAAAAAAAAAAAAAD///////wAAAAAAAAAAAz/+AAgM//////////////A8/4AAAAAAAAAAAAAAAB///////gAAAAAAAAAAB//+AAAI//////////////Ax/gAAAAAAAAAAAAAAAAf/////+AAAAAAAAAAAH///AAAB//////////////gH8AAAAAAAAAAAAAAAAAH/////8AAAAAAAAAAAP///4PAB//////////////wDAAAAAAAAAAAAAAAAAAH/////4AAAAAAAAAAAP///+P8///////////////wDAAAAAAAAAAAAAAAAAADf////4AAAAAAAAAAAP/////////////////////wAAAAAAAAAAAAAAAAAAAD///3g4AAAAAAAAAAAf/////////v///////////wAAAAAAAAAAAAAAAAAAAB///gAcAAAAAAAAAAA//////////n///////////wAAAAAAAAAAAAAAAAAAAB3/+AAcAAAAAAAAAAD///////9//j///////////gAAAAAAAAAAAAAAAAAAAA7/+AAMAAAAAAAAAAD///////8//w3//////////AAAAAAAAAAAAAAAAAAAAAZ/+AAMAAAAAAAAAAH///////+f/8b//////////AAAAAAAAAAAAAAAAAAAAAM/+AAAgAAAAAAAAAP////////f//4Af///////+wAAAAAAAAAAAAAAAAAAAAGf+AAAAAAAAAAAAAP////////P//+AP///////8wAAAAAAAAAAAAAAAAAAAAAP+AB/AAAAAAAAAAf////////n///AH///////ggAAAAAAAAAAAAAAAAAAAAAP+A4DwAAAAAAAAAf////////n///AH///P//+AAAAAAAAAAAAAAAAAAAAAAAP+B4A8AAAAAAAAAf////////3//+AAf/4P/+IAAAAAAAAAAAAAAAgAAAAAAAP/B4AB4AAAAAAAAf////////z//8AAf/wH/8YAAAAAAAAAAAAAAAAAAAAAAAD/3wAj9AAAAAAAAP////////x//4AAf/AD/8QAwAAAAAAAAAAAAAAAAAAAAAAf/wAAAAAAAAAAAP////////4//wAAf+AD/+AA4AAAAAAAAAAAAAAAAAAAAAAH/wAAAAAAAAAAAf////////8//AAAf8AD//AA4AAAAAAAAAAAAAAAAAAAAAAAP/AAAAAAAAAAAf////////8/8AAAP4AAf/gAwAAAAAAAAAAAAAAAAAAAAAAAD/gAAAAAAAAAAf/////////fwAAAPwAAP/gA4AAAAAAAAAAAAAAAAAAAAAAAB/gAAAAAAAAAAf//////////AAAAP4AAP/wA8AAAAAAAAAAAAAAAAAAAAAAAAPgAgAAAAAAAAf/////////4AAAAH4AAN/wAXAAAAAAAAAAAAAAAAAAAAAAAAHgD4AAAAAAAAP/////////w4AAAHwAAMfwALAAAAAAAAAAAAAAAAAAAAAAAADgP/eAAAAAAAH//////////4AAADwAAMfAAOAAAAAAAAAAAAAAAAAAAAAAAABzP/+AAAAAAAD//////////4AAADoAAMGACPAAAAAAAAAAAAAAAAAAAAAAAAA////gAAAAAAD//////////4AAADIAAMAAAHgAAAAAAAAAAAAAAAAAAAAAAAAN///wAAAAAAB//////////wAAAAMAAGAAAPgAAAAAAAAAAAAAAAAAAAAAAAAA///4AAAAAAAf/////////wAAAAMAADAAMDAAAAAAAAAAAAAAAAAAAAAAAAAA////wAAAAAAP/h///////gAAAAAABjgAeAAAAAAAAAAAAAAAAAAAAAAAAAAA////4AAAAAAHAB///////AAAAAAAB7wA+AAAAAAAAAAAAAAAAAAAAAAAAAAA////4AAAAAAAAAP//////AAAAAAAAdwB8AAAAAAAAAAAAAAAAAAAAAAAAAAB////8AAAAAAAAAD/////+AAAAAAAAPwH8AAAAAAAAAAAAAAAAAAAAAAAAAAB////8AAAAAAAAAH/////4AAAAAAAAHwf+CYAAAAAAAAAAAAAAAAAAAAAAAAD////8AAAAAAAAAH/////wAAAAAAAAHwf8+YAAAAAAAAAAAAAAAAAAAAAACAH/////gAAAAAAAAH///z/gAAAAAAAADwf9oDwAAAAAAAAAAAAAAAAAAAAAAAH/////8AAAAAAAAH///3/AAAAAAAAAD4P54B5gAAAAAAAAAAAAAAAAAAAAAAH//////AAAAAAAAH////+AAAAAAAAAB+P5wA78AAAAAAAAAAAAAAAAAAAAAAH//////4AAAAAAAD////8AAAAAAAAAA8D54O//gAAAAAAAAAAAAAAAAAAAAAH//////+AAAAAAAB////8AAAAAAAAAAcAB4AH/wYAAAAAAAAAAAAAAAAAAAAH///////gAAAAAAB////4AAAAAAAAAAMABIAB/5wAAAAAAAAAAAAAAAAAAAAH///////gAAAAAAA////8AAAAAAAAAAH8AAAI/9hAAAAAAAAAAAAAAAAAAAAD///////gAAAAAAA////8AAAAAAAAAAB/AAAA/8AAAAAAAAAAAAAAAAAAAAAB///////gAAAAAAAf///8AAAAAAAAAAAPuxgA/OAAAAAAAAAAAAAAAAAAAAAB///////gAAAAAAAf///8AAAAAAAAAAAABDAAEHACAAAAAAAAAAAAAAAAAAAA///////AAAAAAAAf///+AAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAA//////+AAAAAAAAf///+AAAAAAAAAAAAAADwCAAAAAAAAAAAAAAAAAAAAAAAf/////8AAAAAAAAf///8AQAAAAAAAAAAAAD+DAAAAAAAAAAAAAAAAAAAAAAAf/////4AAAAAAAA////+AwAAAAAAAAAAAAD8HAAAAAAAAAAAAAAAAAAAAAAAP/////4AAAAAAAA////+AwAAAAAAAAAAAB38DgAAAAAAAAAAAAAAAAAAAAAAH/////4AAAAAAAA////+H4AAAAAAAAAAAD/+DwAACAAAAAAAAAAAAAAAAAAAD/////4AAAAAAAB////8PwAAAAAAAAAAAH//nwAAAABAAAAAAAAAAAAAAAAAA/////4AAAAAAAB////wPwAAAAAAAAAAAP///wAAAACAAAAAAAAAAAAAAAAAAf////4AAAAAAAA////gPwAAAAAAAAAAAP///4AAAAAAAAAAAAAAAAAAAAAAAf////wAAAAAAAA////APgAAAAAAAAAAA////8AAAAAAAAAAAAAAAAAAAAAAAf////wAAAAAAAAf//+APgAAAAAAAAAAP////+AAAAAAAAAAAAAAAAAAAAAAAf////gAAAAAAAAf///APgAAAAAAAAAAf/////AAGAAAAAAAAAAAAAAAAAAAAf////gAAAAAAAAP///AfAAAAAAAAAAB//////gACAAAAAAAAAAAAAAAAAAAAf///8AAAAAAAAAP///AfAAAAAAAAAAB//////gAAAAAAAAAAAAAAAAAAAAAAf///gAAAAAAAAAP//+AfAAAAAAAAAAB//////wAAAAAAAAAAAAAAAAAAAAAAf///AAAAAAAAAAH//8AMAAAAAAAAAAA//////4AAAAAAAAAAAAAAAAAAAAAAf///AAAAAAAAAAH//4AAAAAAAAAAAAB//////4AAAAAAAAAAAAAAAAAAAAAAf///AAAAAAAAAAH//4AAAAAAAAAAAAA//////8AAAAAAAAAAAAAAAAAAAAAA///+AAAAAAAAAAD//wAAAAAAAAAAAAA//////8AAAAAAAAAAAAAAAAAAAAAA///+AAAAAAAAAAB//wAAAAAAAAAAAAAf/////8AAAAAAAAAAAAAAAAAAAAAA///8AAAAAAAAAAB//gAAAAAAAAAAAAAf/////4AAAAAAAAAAAAAAAAAAAAAA///4AAAAAAAAAAA//AAAAAAAAAAAAAAf/////4AAAAAAAAAAAAAAAAAAAAAA///wAAAAAAAAAAA/+AAAAAAAAAAAAAAf/wf//4AAAAAAAAAAAAAAAAAAAAAA///gAAAAAAAAAAA/8AAAAAAAAAAAAAAf8AP//wAAAAAAAAAAAAAAAAAAAAAA///AAAAAAAAAAAAcAAAAAAAAAAAAAAAfAAF//gAAAAAAAAAAAAAAAAAAAAAB//4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB//gAABgAAAAAAAAAAAAAAAAAB//8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAf/AAAAgAAAAAAAAAAAAAAAAAD//4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/AAAA4AAAAAAAAAAAAAAAAAD//wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH8AAAA+AAAAAAAAAAAAAAAAAD/8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8AAAAAAAAAAAAAAAAAD/8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYAAAAAAAAAAAAAAAAAD/gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA+AAAHwAAAAAAAAAAAAAAAAAD/4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAcAAAHAAAAAAAAAAAAAAAAAAD/gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMAAAeAAAAAAAAAAAAAAAAAAH/gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB8AAAAAAAAAAAAAAAAAAH+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB4AAAAAAAAAAAAAAAAAAP+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABwAAAAAAAAAAAAAAAAAAH/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP+AAAAAAAAAAAAAAAAAAAAAAMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH4BwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB/gAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAABgAAAAAB/4CAAAMAAAAAAAAAAAAAAAAAAAAAAAAAB/AAAAAAAAAAAAAAAAAAP4AAAD/////4/3/4AAAAAAAAAAAAAAAAAAAAAAAAH/AAAAAAAAAAAAAAAAAH///kAH//////////4AAAAAAAAAAAAAAAAAAAAAAAT/gAAAAAAAAAAAAAAGD/////A////////////+AAAAAAAAAAAAAAAAAAAAAP//AAAAAAAAABgAfAD/////////////////////8AAAAAAAAAAAAAAAAAAAAH//AAAAAAAAP////////////////////////////+AAAAAAAAAAAAAAA+AAAP//AAAAAAAD//////////////////////////////4AAAAAAAAAAAAAB//4A1//AAAAAAB///////////////////////////////4AAAAAAAAAB+ADB///////AAAAAAH///////////////////////////////wAAAAAAABf////4//////+AAAAAA///////////////////////////////8AAAAAAAD//////////////wAAAAH///////////////////////////////wAAAAAAD////////////////gAAB////////////////////////////////gAAAAA///////////////////x+///////////////////////////////////8////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////';
   let landMask = null;
   function isLand(lon, lat) {
     if (!landMask) { const bin = atob(LAND_MASK_B64); landMask = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) landMask[i] = bin.charCodeAt(i); }
-    const i = clamp(Math.floor((lon + 180) / 2), 0, 179), j = clamp(Math.floor((90 - lat) / 2), 0, 89);
-    const k = j * 180 + i;
+    const i = clamp(Math.floor(lon + 180), 0, 359), j = clamp(Math.floor(90 - lat), 0, 179);
+    const k = j * 360 + i;
     return (landMask[k >> 3] >> (7 - (k & 7))) & 1;
   }
 
@@ -109,7 +109,68 @@
     return EBE.i18n.t('common.inSea', { place: es ? o[1] : o[0] }) + ' (' + coords(lon, lat) + ')';
   }
 
-  EBE.geo = { haversineKm, bearing, dir8, placeName, coords, isLand };
+
+  // ---------- continents and oceans (spoken in blind mode) ----------
+  // Coarse rules on top of the 1-degree land mask. The Americas are split in three:
+  // North (with Mexico and Greenland), Central (Guatemala to Panama, plus the Caribbean islands) and South.
+  function continentKey(lon, lat) {
+    if (lat < -60) return 'antarctica';
+    if ((lon < -125 && lat < 28) || (lon < -100 && lat < -10)) return 'oceania';      // Hawaii, Polynesia
+    if (lon < -168.5 && lat > 64) return 'asia';                                       // Chukotka, across 180°
+    if (lon > -32 && lon < -24 && lat > 36 && lat < 40.5) return 'europe';             // Azores
+    if (lat > 59 && lon > -75 && lon < -10) return (lat < 67.5 && lon > -26) ? 'europe' : 'northAmerica';  // Iceland / Greenland
+    if (lon < -30) {
+      if (lat < 7) return 'southAmerica';
+      if (lat < 12.6 && lon > -77.3) return (lon > -63 && lat >= 11.2) ? 'centralAmerica' : 'southAmerica';
+      if ((lat < 16 && lon > -92.3) || (lat < 17.9 && lon > -90.5) || (lat < 18.6 && lon > -89.3 && lon < -87.4)) return 'centralAmerica';
+      if (lat < 23.6 && lon > -85.2 && lon < -59) return 'centralAmerica';            // Caribbean islands
+      return 'northAmerica';
+    }
+    if (lon > 172 && lat > 50) return 'northAmerica';                                  // western Aleutians
+    // Africa: south of the Mediterranean, west of the Red Sea, Madagascar and nearby islands.
+    if (lon < 60 && lat < 37.5 && lat > -40) {
+      if (lat < 12) return 'africa';
+      if (lat <= 29.9) { if (lon < 32.6 + (29.9 - lat) * 0.624) return 'africa'; }
+      else if (lon < 34.2 && lat < (lon < -1 ? 36.0 : lon < 12 ? 37.4 : 34.5)) return 'africa';
+    }
+    // Europe / Asia: Ural mountains and river, Caspian, Caucasus, Black Sea and Bosporus.
+    if (lat > 34 && lon < 70) {
+      if (lon < 26) return 'europe';
+      if (lon < 29.2) return lat > 40.4 ? 'europe' : 'asia';
+      if (lat >= 52) return lon < (lat >= 67 ? 66 : 60) ? 'europe' : 'asia';
+      if (lat >= 47) return lon < 51.5 + (lat - 47) * 1.4 ? 'europe' : 'asia';
+      if (lon < 40) return lat > 42.3 ? 'europe' : 'asia';
+      if (lon < 49.6) return lat > 43.4 - (lon - 40) * 0.25 ? 'europe' : 'asia';
+      return 'asia';
+    }
+    if (lon >= 110 && lat < -10.5) return 'oceania';                                   // Australia, New Zealand
+    if (lon > 130.8 && lat < 0) return 'oceania';                                      // New Guinea, Melanesia
+    if (lon > 133 && lat < 23) return 'oceania';                                       // Micronesia
+    return 'asia';
+  }
+
+  function seaKey(lon, lat) {
+    if (lat < -60) return 'southern';
+    if (lat > 66) return 'arctic';
+    if (lon >= 27.5 && lon <= 42 && lat >= 40.9 && lat <= 47) return 'blackSea';
+    if (lon >= -5.6 && lon <= 37 && lat >= 30 && lat <= 46 && !(lon < 0 && lat > 38)) return 'mediterranean';
+    if (lon >= 45 && lon <= 56 && lat >= 36 && lat <= 48) return 'caspian';
+    if (lat >= 53.5 && lon <= 30.5 && ((lat <= 60.5 && lon >= 10) || (lon >= 17 && lon <= 25.5))) return 'baltic';
+    if (lon >= -96 && lon <= -76 && lat >= 51 && lat <= 66) return 'hudson';
+    const pb = pacificBoundary(lat);
+    if (lon > pb && lon < -60 && lat >= 9 && lat <= 31) return (lat > 21.5 && lon < -80.5) ? 'gulfMexico' : 'caribbean';
+    if (lon > pb && lon < (lat >= 30 ? 45 : 20)) return 'atlantic';
+    if (lon >= 20 && lon < 100 && lat < 31) return 'indian';
+    if (lon >= 100 && lon < 147 && lat < -10) return 'indian';
+    return 'pacific';
+  }
+
+  // Key of the continent or ocean under a point, for EBE.i18n 'region.<key>'.
+  function regionKey(lon, lat) {
+    return isLand(lon, lat) ? continentKey(lon, lat) : seaKey(lon, lat);
+  }
+
+  EBE.geo = { haversineKm, bearing, dir8, placeName, coords, isLand, regionKey, continentKey, seaKey };
 
   // ---------- map view ----------
   function MapView(root, opts) {
@@ -144,6 +205,10 @@
     };
     frame.addEventListener('pointerdown', e => { if (this.interactive) { frame.setPointerCapture(e.pointerId); onPointer(e); } });
     frame.addEventListener('pointermove', e => { if (this.interactive && (e.buttons || e.pointerType === 'mouse')) onPointer(e); });
+    // Lifting the finger (or releasing the mouse) after exploring.
+    const onEnd = () => { if (this.interactive && this.opts.onPointerEnd) this.opts.onPointerEnd(); };
+    frame.addEventListener('pointerup', onEnd);
+    frame.addEventListener('pointercancel', onEnd);
 
     if ('ResizeObserver' in window) new ResizeObserver(() => this.resize()).observe(frame);
     window.addEventListener('resize', () => this.resize());
