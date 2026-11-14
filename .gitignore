@@ -1,0 +1,12 @@
+# Secrets
+.env
+# Python
+.venv/
+__pycache__/
+*.pyc
+# Raw NASA downloads and scratch files (too big for git)
+data/raw/
+data/interim/
+# OS files
+.DS_Store
+Thumbs.db
