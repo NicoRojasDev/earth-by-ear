@@ -66,6 +66,11 @@
     try { scene.tick(now, now + 0.12); } catch (e) { console.error(e); }
   }
 
+  // The person turned the data sound off on purpose: automatic starts (Explore, Game, Tour) respect it.
+  let muted = false;
+  function mute(m) { muted = !!m; }
+  function autoEnable() { if (!on && !muted) enable(); }
+
   // Must be called from a user gesture (browser autoplay rules).
   function enable() {
     if (!ctx && !init()) return false;
@@ -137,7 +142,7 @@
   }
 
   EBE.audio = {
-    enable, disable, setScene, setAlert, duck, allowEvent, trackVoice, out, penta, clamp,
+    enable, disable, mute, autoEnable, isMuted: () => muted, setScene, setAlert, duck, allowEvent, trackVoice, out, penta, clamp,
     isOn: () => on && !!ctx,
     ctx: () => ctx,
     now: () => (ctx ? ctx.currentTime : 0),

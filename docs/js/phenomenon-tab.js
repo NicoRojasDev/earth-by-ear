@@ -43,14 +43,14 @@
             <figcaption class="sr-only" data-el="alt"></figcaption>
           </figure>
           <div class="blind-bar">
-            <button type="button" class="btn big" data-el="bWhere"><span aria-hidden="true">🔊</span> <span data-i18n="blind.where"></span></button>
-            <button type="button" class="btn big" data-el="bDetails"><span aria-hidden="true">ℹ️</span> <span data-i18n="details.btn"></span></button>
-            <button type="button" class="btn big wide" data-el="bPlay"><span aria-hidden="true" data-el="bPlayIcon">▶</span> <span data-el="bPlayLabel"></span></button>
+            <button type="button" class="btn big" data-el="bWhere">${EBE.icon('pin')} <span data-i18n="blind.where"></span></button>
+            <button type="button" class="btn big" data-el="bDetails">${EBE.icon('info')} <span data-i18n="details.btn"></span></button>
+            <button type="button" class="btn big wide" data-el="bPlay"><span data-el="bPlayIcon">${EBE.icon('play')}</span> <span data-el="bPlayLabel"></span></button>
           </div>
           <div class="timeline" role="group" data-i18n-aria="common.timeline">
-            <button type="button" class="btn icon" data-el="prev" data-i18n-aria="common.prev"><span aria-hidden="true">⏮</span></button>
-            <button type="button" class="btn icon primary" data-el="play"><span aria-hidden="true" data-el="playIcon">▶</span></button>
-            <button type="button" class="btn icon" data-el="next" data-i18n-aria="common.next"><span aria-hidden="true">⏭</span></button>
+            <button type="button" class="btn icon" data-el="prev" data-i18n-aria="common.prev">${EBE.icon('prev')}</button>
+            <button type="button" class="btn icon primary" data-el="play"><span data-el="playIcon">${EBE.icon('play')}</span></button>
+            <button type="button" class="btn icon" data-el="next" data-i18n-aria="common.next">${EBE.icon('next')}</button>
             <input type="range" class="slider" data-el="slider" min="0" max="0" value="0" step="1" data-i18n-aria="common.timeline">
             <label class="speed"><span data-i18n="common.speed"></span>
               <select data-el="speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select>
@@ -196,7 +196,7 @@
 
   P.play = function () {
     if (!this.ds) return;
-    if (!EBE.audio.isOn()) { EBE.audio.enable(); }
+    EBE.audio.autoEnable();
     if (this.mode !== 'listen') this.setMode('listen');
     this.playing = true;
     this.updatePlayButton();
@@ -224,8 +224,8 @@
     const label = this.playing ? t('common.pause') : t('common.play');
     this.el.play.setAttribute('aria-label', label);
     this.el.play.setAttribute('aria-pressed', this.playing ? 'true' : 'false');
-    this.el.playIcon.textContent = this.playing ? '⏸' : '▶';
-    this.el.bPlayIcon.textContent = this.playing ? '⏸' : '▶';
+    this.el.playIcon.innerHTML = EBE.icon(this.playing ? 'pause' : 'play');
+    this.el.bPlayIcon.innerHTML = EBE.icon(this.playing ? 'pause' : 'play');
     this.el.bPlayLabel.textContent = t(this.playing ? 'blind.pause' : 'blind.play');
   };
 
@@ -237,7 +237,7 @@
   P.setMode = function (mode, quiet) {
     if (this.mode === mode) return;
     // Explore only makes sense with sound: switching to it is a user gesture, so sound can start here.
-    if (mode === 'explore' && !EBE.audio.isOn()) EBE.audio.enable();
+    if (mode === 'explore') EBE.audio.autoEnable();
     this.mode = mode;
     if (mode === 'explore') this.pause(true);
     this.el.mListen.setAttribute('aria-pressed', mode === 'listen' ? 'true' : 'false');
@@ -329,7 +329,7 @@
   // ---------- Explore ----------
   P.moveCursor = function (lon, lat, fromPointer) {
     if (this.mode !== 'explore') this.setMode('explore');
-    if (!EBE.audio.isOn()) EBE.audio.enable();
+    EBE.audio.autoEnable();
     let lo = lon; if (lo > 180) lo -= 360; if (lo < -180) lo += 360;
     this.cursor = { lon: lo, lat: clamp(lat, -89, 89) };
     this.map.setCursor(this.cursor.lon, this.cursor.lat, true, this.ds && this.ds.type === 'points' ? EBE.config.sound.exploreRadiusKm : 0);

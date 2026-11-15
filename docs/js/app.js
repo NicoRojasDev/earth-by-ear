@@ -96,7 +96,21 @@
     const btn = $('#btn-sound'), on = EBE.audio.isOn();
     btn.setAttribute('aria-pressed', on ? 'true' : 'false');
     btn.querySelector('[data-label]').textContent = on ? t('header.soundOn') : t('header.enableSound');
+    btn.querySelector('[data-sound-icon]').innerHTML = EBE.icon(on ? 'sound' : 'sound-off');
     btn.classList.toggle('on', on);
+    updateBlindToggles();
+  }
+
+  // Blind mode: data sound and voice are switched on and off separately.
+  function updateBlindToggles() {
+    const snd = EBE.audio.isOn(), voice = EBE.a11y.readAloud();
+    const bs = $('#bt-sound'), bv = $('#bt-voice');
+    bs.setAttribute('aria-pressed', snd ? 'true' : 'false');
+    bs.querySelector('[data-bt-icon]').innerHTML = EBE.icon(snd ? 'sound' : 'sound-off');
+    bs.querySelector('[data-bt-state]').textContent = t(snd ? 'blind.soundOn' : 'blind.soundOff');
+    bv.setAttribute('aria-pressed', voice ? 'true' : 'false');
+    bv.querySelector('[data-bt-icon]').innerHTML = EBE.icon(voice ? 'voice' : 'voice-off');
+    bv.querySelector('[data-bt-state]').textContent = t(voice ? 'blind.voiceOn' : 'blind.voiceOff');
   }
 
   function updateLangButtons() {
@@ -151,11 +165,12 @@
   function setVoice(on) {
     $('#btn-voice').setAttribute('aria-pressed', on ? 'true' : 'false');
     EBE.a11y.setReadAloud(on);
+    updateBlindToggles();
   }
 
   function updateModeButton() {
     const blind = EBE.a11y.isBlind();
-    $('#btn-mode [data-mode-icon]').textContent = blind ? '🔊' : '👁';
+    $('#btn-mode [data-mode-icon]').innerHTML = EBE.icon(blind ? 'ear' : 'eye');
     $('#btn-mode [data-mode-label]').textContent = t(blind ? 'mode.btnBlind' : 'mode.btnStandard');
   }
 
@@ -179,6 +194,7 @@
     document.body.classList.remove('choosing');
     $('#welcome').hidden = true; $('#main').hidden = false;
     // The choice is a tap, so sound (and speech on iPhone) can start now.
+    EBE.audio.mute(false);
     if (!EBE.audio.isOn()) EBE.audio.enable();
     setVoice(blind);
     updateModeButton(); updateSoundButton();
@@ -199,8 +215,9 @@
     $('#tablist').addEventListener('keydown', onTabKey);
 
     $('#btn-sound').addEventListener('click', () => {
-      if (EBE.audio.isOn()) EBE.audio.disable();
+      if (EBE.audio.isOn()) { EBE.audio.disable(); EBE.audio.mute(true); }
       else if (!EBE.audio.enable()) { EBE.a11y.announce(t('header.noAudio')); return; }
+      else EBE.audio.mute(false);
       updateSoundButton();
       EBE.a11y.announce(EBE.audio.isOn() ? t('header.soundOn') : t('header.soundOff'));
     });
@@ -222,6 +239,18 @@
     document.querySelectorAll('.choice-big[data-mode]').forEach(b => b.addEventListener('click', () => chooseMode(b.dataset.mode)));
     $('#btn-mode').addEventListener('click', showWelcome);
     $('#btn-help').addEventListener('click', showHelp);
+    $('#bt-sound').addEventListener('click', () => {
+      if (EBE.audio.isOn()) { EBE.audio.disable(); EBE.audio.mute(true); }
+      else { EBE.audio.mute(false); EBE.audio.enable(); }
+      updateSoundButton();
+      EBE.a11y.announce(t(EBE.audio.isOn() ? 'blind.soundOnMsg' : 'blind.soundOffMsg'));
+    });
+    $('#bt-voice').addEventListener('click', () => {
+      const on = !EBE.a11y.readAloud();
+      setVoice(on);
+      if (on) EBE.a11y.speak(t('blind.voiceOnMsg'));
+      else EBE.a11y.announce(t('blind.voiceOffMsg'));
+    });
     $('#bh-start').addEventListener('click', startBlind);
     $('#bh-replay').addEventListener('click', () => EBE.a11y.speak(helpText()));
     $('#tb-prev').addEventListener('click', () => stepTopic(-1));

@@ -5,27 +5,47 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Earth by Ear</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%8D%3C/text%3E%3C/svg%3E">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.75' stroke-linecap='round'%3E%3Crect width='24' height='24' rx='5' fill='black' stroke='none'/%3E%3Ccircle cx='12' cy='12' r='7.5'/%3E%3Cpath d='M4.5 12h15M12 4.5a11 11 0 0 1 0 15M12 4.5a11 11 0 0 0 0 15'/%3E%3C/svg%3E">
 <meta name="description" content="Earth by Ear turns NASA Earth Information Center visuals into live, touchable sound. Hear and explore fires, ocean heat, rain, air temperature and air pollution, with or without seeing the map.">
 <meta name="theme-color" content="#0b1220">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="choosing">
+<!-- Minimal line icons (white, drawn with the text color). -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-ear" viewBox="0 0 24 24"><path d="M6.5 9a5.5 5.5 0 0 1 11 0c0 3.2-2.8 4.2-2.8 7a3.2 3.2 0 0 1-6 1.6"/><path d="M9.5 9.3a2.5 2.5 0 0 1 5 0c0 1.4-1.4 1.9-1.4 3.2"/></symbol>
+  <symbol id="i-sound" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 6v12l-4.5-3.5H4z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></symbol>
+  <symbol id="i-sound-off" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 6v12l-4.5-3.5H4z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></symbol>
+  <symbol id="i-voice" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.3-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><path d="M17 6a4 4 0 0 1 0 5.5M19.5 3.5a7.5 7.5 0 0 1 0 10.5"/></symbol>
+  <symbol id="i-voice-off" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.3-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><path d="M17 6l5 5M22 6l-5 5"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.6.3-1 .8-1 1.5v.6"/><path d="M12 16.8v.2"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.8v.2"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0 1 13 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l10-6.5z"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8.5 5.5v13M15.5 5.5v13"/></symbol>
+  <symbol id="i-prev" viewBox="0 0 24 24"><path d="M17.5 6v12l-8.5-6zM6.5 6v12"/></symbol>
+  <symbol id="i-next" viewBox="0 0 24 24"><path d="M6.5 6v12l8.5-6zM17.5 6v12"/></symbol>
+  <symbol id="i-left" viewBox="0 0 24 24"><path d="M15 4.5 7.5 12l7.5 7.5"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24"><path d="M9 4.5 16.5 12 9 19.5"/></symbol>
+  <symbol id="i-replay" viewBox="0 0 24 24"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"/><path d="M4.5 4.5v4h4"/></symbol>
+</svg>
 <a class="skip" href="#main" data-i18n="header.skip">Skip to content</a>
 
 <!-- Welcome: choose standard or blind / low-vision mode before using the app. -->
 <main id="welcome" class="welcome" aria-labelledby="welcome-title">
-  <h1 id="welcome-title" tabindex="-1"><span aria-hidden="true">🌍</span> Earth by Ear</h1>
+  <h1 id="welcome-title" tabindex="-1"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-globe"></use></svg> Earth by Ear</h1>
   <p class="welcome-lead" data-i18n="welcome.lead"></p>
   <h2 class="welcome-q" data-i18n="welcome.question"></h2>
   <div class="welcome-choices">
     <button type="button" class="choice-big" data-mode="standard">
-      <span class="ico" aria-hidden="true">👁</span>
+      <span class="ico"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-eye"></use></svg></span>
       <span class="ttl" data-i18n="mode.standard"></span>
       <span class="sub" data-i18n="mode.standardSub"></span>
     </button>
     <button type="button" class="choice-big blind" data-mode="blind">
-      <span class="ico" aria-hidden="true">🔊</span>
+      <span class="ico"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-ear"></use></svg></span>
       <span class="ttl" data-i18n="mode.blind"></span>
       <span class="sub" data-i18n="mode.blindSub"></span>
     </button>
@@ -46,21 +66,25 @@
   </div>
   <div class="controls">
     <button type="button" id="btn-sound" class="btn big sound" aria-pressed="false">
-      <span aria-hidden="true">🔊</span> <span data-label></span>
+      <span data-sound-icon><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-sound"></use></svg></span> <span data-label></span>
     </button>
     <button type="button" id="btn-mode" class="btn">
-      <span aria-hidden="true" data-mode-icon>👁</span> <span data-mode-label></span>
+      <span data-mode-icon><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-eye"></use></svg></span> <span data-mode-label></span>
     </button>
     <button type="button" id="btn-help" class="btn">
-      <span aria-hidden="true">❓</span> <span data-i18n="help.button"></span>
+      <svg class="ic" aria-hidden="true" focusable="false"><use href="#i-help"></use></svg> <span data-i18n="help.button"></span>
     </button>
     <button type="button" id="btn-voice" class="btn" aria-pressed="false">
-      <span aria-hidden="true">🗣</span> <span data-i18n="header.readAloud"></span>
+      <svg class="ic" aria-hidden="true" focusable="false"><use href="#i-voice"></use></svg> <span data-i18n="header.readAloud"></span>
     </button>
     <div class="lang" role="group" data-i18n-aria="header.language">
       <button type="button" class="btn" data-lang="en" lang="en" aria-label="EN, English">EN</button>
       <button type="button" class="btn" data-lang="es" lang="es" aria-label="ES, Español">ES</button>
     </div>
+  </div>
+  <div class="blind-toggles" role="group" data-i18n-aria="blind.switches">
+    <button type="button" id="bt-sound" class="btn toggle" aria-pressed="true"><span data-bt-icon><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-sound"></use></svg></span> <span data-i18n="blind.soundLabel"></span> <span class="state" data-bt-state></span></button>
+    <button type="button" id="bt-voice" class="btn toggle" aria-pressed="true"><span data-bt-icon><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-voice"></use></svg></span> <span data-i18n="blind.voiceLabel"></span> <span class="state" data-bt-state></span></button>
   </div>
   <p class="intro" data-i18n="app.intro"></p>
   <p class="note" id="ios-note" data-i18n="header.iosNote" hidden></p>
@@ -78,7 +102,7 @@
       <li data-i18n="help.s5"></li>
       <li data-i18n="help.s6"></li>
     </ol>
-    <button type="button" class="btn" id="bh-replay"><span aria-hidden="true">🔊</span> <span data-i18n="help.replay"></span></button>
+    <button type="button" class="btn" id="bh-replay"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-replay"></use></svg> <span data-i18n="help.replay"></span></button>
     <div class="welcome-lang">
       <span data-i18n="header.language"></span>
       <div class="lang" role="group" data-i18n-aria="header.language">
@@ -87,16 +111,16 @@
       </div>
     </div>
     <button type="button" class="choice-big bh-start" id="bh-start">
-      <span class="ico" aria-hidden="true">▶</span>
+      <span class="ico"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-play"></use></svg></span>
       <span class="ttl" data-i18n="help.start"></span>
     </button>
   </section>
 
   <!-- Blind mode: one big topic switcher instead of the tab list. -->
   <div class="topicbar" id="topicbar">
-    <button type="button" class="btn" id="tb-prev" data-i18n-aria="blind.prevTopic"><span aria-hidden="true">◀</span></button>
+    <button type="button" class="btn" id="tb-prev" data-i18n-aria="blind.prevTopic"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-left"></use></svg></button>
     <h2 id="tb-name" class="tb-name" tabindex="-1"></h2>
-    <button type="button" class="btn" id="tb-next" data-i18n-aria="blind.nextTopic"><span aria-hidden="true">▶</span></button>
+    <button type="button" class="btn" id="tb-next" data-i18n-aria="blind.nextTopic"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-right"></use></svg></button>
   </div>
   <nav class="tabbar">
     <div id="tablist" class="tablist" role="tablist" data-i18n-aria="tabs.label"></div>

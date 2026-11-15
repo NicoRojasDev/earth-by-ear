@@ -51,6 +51,7 @@
   // If the chosen voice fails (not installed on the phone), try again with the language only, then plain.
   function speak(text, onEnd, opts) {
     if (!('speechSynthesis' in window) || !text) { if (onEnd) onEnd(); return; }
+    if (blind && !readAloud) { if (onEnd) onEnd(); return; }   // blind mode: the voice switch is off
     const synth = window.speechSynthesis;
     const lang = EBE.i18n.getLang();
     let done = false;
@@ -93,6 +94,9 @@
     window.speechSynthesis.onvoiceschanged = loadVoices;
     loadVoices();
   }
+
+  // Minimal white line icons (SVG sprite in index.html).
+  EBE.icon = name => '<svg class="ic" aria-hidden="true" focusable="false"><use href="#i-' + name + '"></use></svg>';
 
   EBE.a11y = {
     announce, speak, stopSpeaking, reducedMotion,

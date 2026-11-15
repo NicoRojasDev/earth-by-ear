@@ -66,7 +66,7 @@
 
   // ---------- sound (same mapping as Explore, so what you learn there helps here) ----------
   function playClip(round) {
-    if (!EBE.audio.isOn()) EBE.audio.enable();
+    EBE.audio.autoEnable();
     const cfg = EBE.config.byId(round.id);
     const inst = EBE.instruments.create(cfg.instrument);
     const it = round.intensity, pan = 0.9 * round.lon / 180, pitch = (round.lat + 90) / 180;
@@ -272,7 +272,7 @@
       </div>`;
     el = {};
     panel.querySelectorAll('[data-el]').forEach(e => { el[e.dataset.el] = e; });
-    el.start.addEventListener('click', () => { if (!EBE.audio.isOn()) EBE.audio.enable(); prepare().then(startGame); });
+    el.start.addEventListener('click', () => { EBE.audio.autoEnable(); prepare().then(startGame); });
     el.replay.addEventListener('click', replay);
     el.submit.addEventListener('click', submit);
     el.next.addEventListener('click', nextRound);

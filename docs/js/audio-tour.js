@@ -80,13 +80,13 @@
     if (stop === 'intro' || stop === 'outro') { say(stopIntro(stop), advance, my); return; }
     const peak = peakFrame(datasets[stop]);
     say(stopIntro(stop), () => {
-      setText('♪ ' + t('tour.listening', { name: t('tab.' + stop) }));
+      setText(t('tour.listening', { name: t('tab.' + stop) }));
       playClip(stop, peak, () => say(describe(stop, peak), advance, my), my);
     }, my);
   }
 
   function play() {
-    if (!EBE.audio.isOn()) EBE.audio.enable();
+    EBE.audio.autoEnable();
     prepare().then(() => { if (finished) { k = 0; finished = false; } playing = true; runStop(); });
   }
 

@@ -256,7 +256,7 @@
     c.setTransform(dpr, 0, 0, dpr, 0, 0);
     c.clearRect(0, 0, this.w, this.h);
     if (this.frame.classList.contains('no-image')) {
-      c.strokeStyle = 'rgba(160,190,230,0.18)'; c.lineWidth = 1;
+      c.strokeStyle = 'rgba(255,255,255,0.14)'; c.lineWidth = 1;
       for (let lon = -180; lon <= 180; lon += 30) { const [x] = this.toXY(lon, 0); c.beginPath(); c.moveTo(x, 0); c.lineTo(x, this.h); c.stroke(); }
       for (let lat = -90; lat <= 90; lat += 30) { const [, y] = this.toXY(0, lat); c.beginPath(); c.moveTo(0, y); c.lineTo(this.w, y); c.stroke(); }
     }
@@ -268,9 +268,9 @@
       const [x, y] = this.toXY(p[0], p[1]);
       const r = (1.1 + 2.8 * p[2]) * scale;
       const g = c.createRadialGradient(x, y, 0, x, y, r * 2.2);
-      g.addColorStop(0, p[2] > 0.66 ? 'rgba(255,250,230,0.95)' : 'rgba(255,214,120,0.9)');
-      g.addColorStop(0.35, 'rgba(255,140,40,0.6)');
-      g.addColorStop(1, 'rgba(255,60,0,0)');
+      g.addColorStop(0, p[2] > 0.66 ? 'rgba(255,255,255,0.95)' : 'rgba(235,235,235,0.85)');
+      g.addColorStop(0.35, 'rgba(255,255,255,0.45)');
+      g.addColorStop(1, 'rgba(255,255,255,0)');
       c.fillStyle = g; c.beginPath(); c.arc(x, y, r * 2.2, 0, Math.PI * 2); c.fill();
     }
     c.globalCompositeOperation = 'source-over';
@@ -295,10 +295,10 @@
       if (this.cursor.radiusKm) {
         const ry = this.cursor.radiusKm / 111 / 180 * this.h;
         const rx = ry / Math.max(0.2, Math.cos(this.cursor.lat * RAD));
-        c.strokeStyle = 'rgba(120,220,255,0.55)'; c.setLineDash([4, 4]); c.lineWidth = 1;
+        c.strokeStyle = 'rgba(255,255,255,0.55)'; c.setLineDash([4, 4]); c.lineWidth = 1;
         c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); c.stroke(); c.setLineDash([]);
       }
-      c.strokeStyle = '#7fe0ff'; c.lineWidth = 2;
+      c.strokeStyle = '#ffffff'; c.lineWidth = 2;
       c.beginPath(); c.arc(x, y, 9, 0, Math.PI * 2); c.stroke();
       c.beginPath(); c.moveTo(x - 15, y); c.lineTo(x - 5, y); c.moveTo(x + 5, y); c.lineTo(x + 15, y);
       c.moveTo(x, y - 15); c.lineTo(x, y - 5); c.moveTo(x, y + 5); c.lineTo(x, y + 15); c.stroke();
