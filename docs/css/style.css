@@ -250,3 +250,44 @@ body.blind .blind-toggles .btn { min-height: 60px; flex-wrap: wrap; justify-cont
 }
 @media (min-width: 2400px) { :root { font-size: 24px; } }
 body.choosing { padding-bottom: 0; }   /* the welcome screen fits the screen exactly */
+
+/* Tab bar with previous / next buttons */
+.tabbar { display: flex; align-items: center; gap: 8px; }
+.tablist { flex: 1; min-width: 0; }
+.tabnav { flex: none; padding: 6px 10px; }
+body.blind .tabbar { display: none; }
+.tab.important { color: var(--text); font-weight: 700; border-color: var(--line-2); }
+
+/* Big screens: dock with the buttons and tabs at the bottom of the screen */
+.dock { display: none; }
+body.docked .dock {
+  display: flex; flex-direction: column; gap: 10px; position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+  padding: 12px 48px 18px; background: var(--bg); border-top: 1px solid var(--line-2);
+}
+body.choosing .dock { display: none !important; }
+body.docked .dock .controls { justify-content: flex-end; }
+body.docked .dock .tabbar { position: static; padding: 0; }
+body.docked .dock .tab { border-radius: 0 0 10px 10px; border-bottom: 1px solid var(--line); border-top: 3px solid transparent; min-height: 56px; font-size: 1.05rem; }
+body.docked .dock .tab[aria-selected="true"] { border-top-color: var(--accent); }
+body.docked .dock .tabnav { min-height: 56px; min-width: 56px; }
+body.docked .dock .topicbar { margin: 0; }
+body.docked .panel { border-radius: var(--radius); }
+body.docked.blind .dock .controls .btn { min-height: 56px; }
+
+/* Insights tab */
+.insights h3 { margin-top: 24px; color: var(--text); }
+.ins-numbers { list-style: none; padding: 0; margin: 8px 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.ins-num { background: var(--panel-2); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; }
+.ins-value { font-size: 2rem; font-weight: 800; letter-spacing: -0.01em; color: var(--text); }
+.ins-what { color: var(--muted); }
+.ins-problems { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px; }
+.ins-card { background: var(--panel-2); border: 1px solid var(--line); border-left: 4px solid var(--text); border-radius: 12px; padding: 14px 16px; }
+.ins-card h4 { margin: 0 0 8px; font-size: 1.15rem; }
+.ins-card p { margin: 6px 0; }
+.ins-card b { color: var(--text); }
+.ins-method { color: var(--muted); max-width: 90ch; }
+
+/* Game: the chosen answer is unmistakable (inverted colors and a thick border) */
+.choice:has(input:checked) { background: var(--text); color: var(--bg); border: 2px solid var(--text); font-weight: 800; box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--text); }
+.choice:has(input:checked) input { accent-color: #0a0a0a; }
+.choice:focus-within { outline: 3px solid var(--focus); outline-offset: 2px; }

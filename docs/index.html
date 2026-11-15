@@ -139,8 +139,10 @@
     <h2 id="tb-name" class="tb-name" tabindex="-1"></h2>
     <button type="button" class="btn" id="tb-next" data-i18n-aria="blind.nextTopic"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-right"></use></svg></button>
   </div>
-  <nav class="tabbar">
+  <nav class="tabbar" data-i18n-aria="tabs.label">
+    <button type="button" class="btn tabnav" id="tab-prev" data-i18n-aria="tabs.prev"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-left"></use></svg></button>
     <div id="tablist" class="tablist" role="tablist" data-i18n-aria="tabs.label"></div>
+    <button type="button" class="btn tabnav" id="tab-next" data-i18n-aria="tabs.next"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-right"></use></svg></button>
   </nav>
   <div id="panels"></div>
 </main>
@@ -162,7 +164,10 @@
 <script src="js/phenomenon-tab.js"></script>
 <script src="js/game.js"></script>
 <script src="js/audio-tour.js"></script>
+<script src="js/insights.js"></script>
 <script src="js/globe.js"></script>
 <script src="js/app.js"></script>
+<!-- Big screens: buttons and tabs move here, to the bottom of the screen, within reach. -->
+<div id="dock" class="dock" role="region" data-i18n-aria="dock.label"></div>
 </body>
 </html>

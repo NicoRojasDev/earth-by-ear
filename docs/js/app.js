@@ -137,13 +137,19 @@
   }
 
   // Blind mode instructions: a screen of its own, read aloud, with a big Start button.
+  function helpKeys() {
+    const big = DOCK_MQ.matches;
+    return ['help.s1' + (big ? 'Dock' : ''), 'help.s2', 'help.s3', 'help.s4', 'help.s5', 'help.s6' + (big ? 'Dock' : '')];
+  }
+
   function helpText() {
-    const steps = ['help.s1', 'help.s2', 'help.s3', 'help.s4', 'help.s5', 'help.s6'].map(k => t(k));
+    const steps = helpKeys().map(k => t(k));
     return [t('help.title') + '.'].concat(steps, t('help.end')).join(' ');
   }
 
   function showHelp() {
     if (current) current.controller.deactivate();
+    document.querySelectorAll('#blind-help .bh-steps li').forEach((li, i) => { li.dataset.i18n = helpKeys()[i]; li.textContent = t(helpKeys()[i]); });
     document.body.classList.add('helpopen');
     $('#blind-help').hidden = false;
     $('#bh-title').focus();
@@ -160,6 +166,32 @@
     select(current.id, false);
     $('#tb-name').focus();
     sayTopic(current);
+  }
+
+  // Previous / next tab buttons beside the tab list (standard mode).
+  function stepTab(d) {
+    const i = Math.max(0, tabs.indexOf(current));
+    select(tabs[(i + d + tabs.length) % tabs.length].id, true);
+  }
+
+  // Big screens (museum walls, kiosks): the header buttons and the tabs move to a dock at the bottom of
+  // the screen, within reach of a seated person or a child; the focus order follows.
+  const DOCK_MQ = window.matchMedia('(min-width: 1600px)');
+  let docked = null;
+  function placeDock() {
+    if (!docked) docked = ['.top .controls', '.blind-toggles', '#topicbar', '.tabbar'].map(sel => {
+      const el = $(sel), mark = document.createComment('dock');
+      el.parentNode.insertBefore(mark, el);
+      return { el, mark };
+    });
+    const big = DOCK_MQ.matches, dock = $('#dock');
+    docked.forEach(({ el, mark }) => { if (big) dock.appendChild(el); else mark.parentNode.insertBefore(el, mark.nextSibling); });
+    document.body.classList.toggle('docked', big);
+    padForDock();
+  }
+  function padForDock() {
+    const dock = $('#dock');
+    document.body.style.paddingBottom = DOCK_MQ.matches ? (dock.offsetHeight + 24) + 'px' : '';
   }
 
   function setVoice(on) {
@@ -233,7 +265,14 @@
     makeTab('tour', EBE.Tour);
     makeTab('game', EBE.Game);
     makeTab('about', aboutController());
+    const ins = makeTab('insights', EBE.Insights);
+    ins.button.classList.add('important');
+    $('#tab-prev').addEventListener('click', () => stepTab(-1));
+    $('#tab-next').addEventListener('click', () => stepTab(1));
     $('#tablist').addEventListener('keydown', onTabKey);
+    placeDock();
+    if (DOCK_MQ.addEventListener) DOCK_MQ.addEventListener('change', placeDock);
+    if (window.ResizeObserver) new ResizeObserver(padForDock).observe($('#dock'));
 
     $('#btn-sound').addEventListener('click', () => {
       if (EBE.audio.isOn()) { EBE.audio.disable(); EBE.audio.mute(true); }
