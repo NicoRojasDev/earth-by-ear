@@ -1,32 +1,89 @@
 # Earth by Ear
 
-**Touchable sound in everyone's pocket.**
+**Hear the planet. Touch the data.**
 
-Earth by Ear turns NASA's Earth Information Center (EIC) visuals into live, touchable sound. Hear and explore fires, ocean heat, rain, air temperature and air pollution, with or without seeing the map.
+Earth by Ear turns NASA's Earth Information Center (EIC) visualizations into live sound that you can touch. Turn a 3D globe wrapped in real NASA frames, point at any place and hear its fires, ocean heat, rain, air temperature or air pollution, with or without seeing the screen.
 
-**Try it:** https://nicorojasdev.github.io/earth-by-ear/ (any phone or computer browser, nothing to install, English and Spanish).
+**▶ Try it:** https://nicorojasdev.github.io/earth-by-ear/ (any phone, tablet, computer or giant screen; nothing to install; English and Spanish)
+**Museum kiosk:** https://nicorojasdev.github.io/earth-by-ear/?kiosk=1
 
-Built for the **NASA International Space Apps Challenge 2026**, challenge *The Earth Information Jukebox*, by a team of Data Science and AI students from ITSE, Santiago del Estero, Argentina.
+Built for the **NASA International Space Apps Challenge 2026**, challenge *The Earth Information Jukebox*, by a team of three Data Science and AI students from ITSE, Santiago del Estero, Argentina.
+
+![Earth by Ear on a big screen: the Fires globe in Explore mode](pitch/screenshots/globe-fires.jpg)
+
+## Why
+
+The EIC shows the state of the planet on video walls, in museums and on the web, but almost only with images. People who are blind or have low vision are left out, and a visitor in a busy hall looks at a map for a few seconds without learning much from it. Earth by Ear adds a sound layer to the same NASA visuals. Every sound is computed from values read from the real frames, so listening is another way to read the data, not a soundtrack.
+
+## Results
+
+| Claim | Evidence |
+|---|---|
+| **People can hear the data** | Listening game with **20 people**: **95%** named the phenomenon from a 3-second clip (chance: 20%) and **85%** also got its intensity right (chance: 33%). One-sided binomial test, p < 0.0001 for both. |
+| **The data is real** | The fire spots we read from the EIC frames rise and fall with **NASA FIRMS** VIIRS detections: rank correlation **0.67–0.94** in five regions and **0.93** over 300 region × window pairs in 2026. |
+| **The mix is fair** | A loudness meter on the app's output keeps the five instruments within about **4 dB** of each other, on headphones and on phone speakers. |
+| **It is accessible** | Automated WCAG 2.1 AA checks (axe-core) report **0 issues** on every screen we test, in both modes and both languages. |
+
+Details, charts and limits: [`pitch/validation.md`](pitch/validation.md).
 
 ## What it does
 
-- **Made first for museum giant screens.** The Earth Information Center lives on video walls and touch kiosks; Earth by Ear adds the sound layer. Open it as `https://nicorojasdev.github.io/earth-by-ear/?kiosk=1` on an exhibit screen: after 5 minutes without use it goes back to a welcome screen with a turning Earth (wrapped in the same NASA frames), and a QR code there opens the app on visitors' phones. On big screens the layout uses the whole width, and the buttons and tabs move to a bar at the bottom of the screen, within reach of seated visitors and children.
-- **Blind mode on a museum wall.** Every control sits at the bottom of the screen, and four arrows move the cursor over the map (tap for one step, hold to keep moving, with three speeds), so a visitor does not need to reach the whole screen. Buttons grow or shrink with the screen.
-- **Insights tab.** The key numbers we measured (for example, 75% of the ocean warmer than normal on 11 Nov 2026, and the Gran Chaco as the hottest place on Earth on 10–12 Nov), six problems with what the data shows and possible solutions, and how we got the numbers.
-- **Two modes, chosen on the welcome screen.** *Standard mode* for people who see the screen, and a simple *blind or low-vision mode*: sound and voice start on their own, the screen shows only a big topic switcher, a big map and three big buttons: *Repeat*, *Details* (date, place, coordinates in words, value with its units, intensity and the world average) and *Listen over time*. Sliding a finger says the continent or ocean under it (the Americas split into North, Central and South America); lifting it says the value.
-- **Five phenomena, five instruments.** Each tab shows the real EIC frame and plays sound computed from its values: fires (crackling), ocean heat (cello-like drone), rain and snow (drops), air temperature (warm pad and whistle) and air quality (muffled rumble).
-- **Listen:** the animation plays and you hear each moment. Higher values sound denser, brighter and louder; a tense chord comes in when a moment is above the period average.
-- **Explore:** slide a finger (or use the arrow keys) over the map and hear the value at each place. For fires, a sonar speeds up as you get closer to the nearest fire.
-- **Game:** 10 rounds to guess the phenomenon and its intensity by ear. It also measures whether the sounds can be understood (accuracy, confusion matrix, p-value).
-- **Accessible:** keyboard and screen reader support, text descriptions generated from the same data as the sound, optional read-aloud voice.
+**Two modes, chosen on the welcome screen.**
+
+| Standard mode | Blind or low-vision mode |
+|---|---|
+| ![Ocean heat on the globe](pitch/screenshots/globe-ocean.jpg) | ![Blind mode on a big screen](pitch/screenshots/blind-wall.jpg) |
+| A 3D globe (or a flat map) wrapped in the real EIC frame. Drag to turn it, or use two fingers on a touch screen; point with one finger or the mouse to hear a place. | Sound and voice start on their own and spoken instructions explain the screen. Sliding a finger says the continent or ocean; lifting it says the value. *Details* reads the date, place, value with its units, intensity and the world average. |
+
+- **Five phenomena, five instruments.** Fires (crackling), ocean heat (cello-like drone), rain and snow (drops), air temperature (warm pad and whistle) and air quality (muffled rumble).
+- **Listen:** the animation plays like a jukebox. Higher values sound denser, brighter and louder; a tense chord comes in when a moment is above the period average. The globe turns slowly while you listen.
+- **Explore:** hear the value under your finger, the mouse or the arrow keys. For fires, a sonar speeds up as you get closer to the nearest fire.
+- **Audio Tour:** a narrated tour of the five phenomena that does not need the screen.
+- **Game:** 10 rounds to name the phenomenon and its intensity by ear. It is also how we measured whether the sounds work.
+- **Insights:** what we learned from the data as data science students: key numbers, six problems with what the data shows and possible solutions, and how we got the numbers.
+
+**Made first for museum giant screens.**
+
+- **Kiosk mode** (`?kiosk=1`): after 5 minutes without use it goes back to a welcome screen with a turning Earth wrapped in the same NASA frames; a QR code there opens the app on visitors' phones.
+- **Everything within reach:** on screens 1600 px wide or more, all buttons and tabs move to a bar at the bottom of the screen, where seated visitors and children can reach them.
+- **Blind mode on a wall:** four arrows move the cursor over the map (tap for one step, hold to keep moving, three speeds), so a visitor does not need to reach the whole screen. Buttons grow or shrink with the screen.
+
+| Welcome screen | Phone, globe | Phone, blind mode |
+|---|---|---|
+| ![Welcome screen with the turning Earth and the QR code](pitch/screenshots/welcome.jpg) | ![Globe on a phone](pitch/screenshots/phone-globe.jpg) | ![Blind mode on a phone](pitch/screenshots/phone-blind.jpg) |
+
+**Accessible by design:** keyboard and screen reader support (ARIA tabs, live regions), text descriptions generated from the same numbers as the sound, an optional read-aloud voice in the chosen language, single-pointer alternatives for every gesture (turn buttons, cursor arrows), and a still globe when the device asks for reduced motion.
+
+## Try it in one minute
+
+1. Open the link, choose **Standard mode** and turn the sound on.
+2. On **Fires**, press **Explore** and point at South America on the globe: the crackles get denser near the fires of the Amazon and the Gran Chaco.
+3. Drag the globe (or use two fingers) to turn it; press **Flat map** to see the whole world at once.
+4. Open **Insights** for what the data says, then press **Start** and try the **blind mode** with your eyes closed.
 
 ## How it works
 
-1. `scripts/download_raw.py` downloads the EIC visualizations from NASA's Scientific Visualization Studio (SVS).
-2. `scripts/build_data.py` reads each frame, turns pixel colors into values with the visualization's own colorbar, and writes a 2-degree grid (or a list of fire spots) to `docs/data/<id>.js`, plus the frame images. Settings are in `scripts/phenomena.json`.
-3. The web app (`docs/`, plain HTML, CSS and JavaScript with the Web Audio API) loads that data and synthesizes all sound live in the browser. It makes no API calls.
+```
+NASA SVS (EIC frames) → download_raw.py → build_data.py → docs/data/*.js + frames → web app (docs/)
+                                          colorbar → values                         Web Audio + Web Speech,
+                                          2° grid / fire spots                      flat map or 3D globe
+```
 
-To rebuild the data on Windows: `.venv/Scripts/python scripts/download_raw.py` and then `.venv/Scripts/python scripts/build_data.py --all`.
+1. `scripts/download_raw.py` downloads the EIC visualizations from NASA's Scientific Visualization Studio (SVS).
+2. `scripts/build_data.py` reads each frame, turns pixel colors into values with the visualization's own colorbar (nearest color in Lab space), and writes a 2-degree grid, or a list of fire spots, to `docs/data/<id>.js`, plus the frame images. Settings are in `scripts/phenomena.json`.
+3. The web app (`docs/`) is plain HTML, CSS and JavaScript with no libraries and no API calls. It synthesizes every sound live with the Web Audio API, speaks with the Web Speech API and draws the globe itself (orthographic projection of the real frame on a canvas).
+4. `scripts/validate_firms.py` compares our fire spots with NASA FIRMS, and `scripts/analyze_game.py` tests game results against chance.
+
+To rebuild the data on Windows: `.venv/Scripts/python scripts/download_raw.py`, then `.venv/Scripts/python scripts/build_data.py --all`. GitHub Pages serves `docs/` as it is.
+
+## Repository
+
+| Path | What is there |
+|---|---|
+| `docs/` | The web app (GitHub Pages): `index.html`, `css/`, `js/` (map and globe, audio engine, instruments, tabs, game, tour, insights, translations) and `data/` |
+| `scripts/` | Python data pipeline and validation; `scripts/windows/` has double-click helpers |
+| `pitch/` | Validation, game results, submission texts, video scripts and subtitles, screenshots, data audit and a summary PDF |
+| `CLAUDE.md` | Our working notes and decisions, in Spanish |
 
 ## Data
 
@@ -44,17 +101,13 @@ NASA FIRMS (https://firms.modaps.eosdis.nasa.gov/) is our reference for cross-ch
 
 Credit: NASA's Scientific Visualization Studio.
 
-## Validation
-
-- **The fire data is real:** the fire spots we read from the SVS 5113 frames rise and fall with NASA FIRMS VIIRS detections, with a rank correlation of 0.67–0.94 in five regions and 0.93 overall (60 five-day windows in 2026).
-- **The mix is fair:** a loudness meter on the app's output keeps the five instruments within about 4 dB of each other, on headphones and on phone speakers.
-- **People can hear it:** results of the listening game are being collected.
-
-Details, chart and data are in [`pitch/validation.md`](pitch/validation.md).
-
 ## Limitations
 
-Values are read from image colors, not from calibrated measurements, so they are approximations; values beyond a colorbar are shown at its limit. The 2-degree grid averages out local detail. Fire intensity is relative (colorbar color plus cluster size); where fires are very dense, nearby fires merge into one cluster, so the number of crackles under-represents those regions. Fire data stops at the end of October 2026 because the satellite feed behind the visualization stopped in early November.
+- Values are read from image colors, not from calibrated measurements, so they are approximations; values beyond a colorbar are shown at its limit.
+- The 2-degree grid (about 220 km) averages out local detail.
+- Fire intensity is relative (colorbar color plus cluster size). Where fires are very dense, nearby fires merge into one cluster, so those regions get fewer crackles than they deserve.
+- Fire data stops at the end of October 2026 because the satellite feed behind the visualization stopped in early November.
+- The listening game had 20 people from around the team, not a random sample of museum visitors. **Next step:** test with blind and low-vision visitors and with a museum.
 
 ## AI disclosure
 

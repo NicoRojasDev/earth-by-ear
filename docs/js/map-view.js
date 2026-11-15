@@ -351,6 +351,10 @@
     Object.assign(this.base.style, { width: d + 'px', height: d + 'px', left: Math.round(this.cx - d / 2) + 'px', top: Math.round(this.cy - d / 2) + 'px' });
     const n = Math.max(64, Math.min(GLOBE_MAX_PX, Math.round(d * dpr)));
     if (n !== this.base.width) { this.base.width = this.base.height = n; this.lut = null; this.out = null; }
+    // Room left on each side of the globe: wide screens show the numbers there (see .hud).
+    const side = (this.w - this.R * 2) / 2, fig = this.root.parentNode;
+    this.frame.classList.toggle('wide', this.view === 'globe' && side >= 210);
+    if (fig && fig.style) fig.style.setProperty('--hud-w', Math.max(0, Math.round(side - 36)) + 'px');
     this.globeDirty = true;
     this.renderLayer();
   };

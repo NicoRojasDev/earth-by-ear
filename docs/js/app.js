@@ -339,6 +339,7 @@
     }));
     document.querySelectorAll('.choice-big[data-mode]').forEach(b => b.addEventListener('click', () => chooseMode(b.dataset.mode)));
     $('#btn-mode').addEventListener('click', showWelcome);
+    $('#btn-home').addEventListener('click', showWelcome);
     $('#btn-help').addEventListener('click', showHelp);
     $('#bt-sound').addEventListener('click', () => {
       if (EBE.audio.isOn()) { EBE.audio.disable(); EBE.audio.mute(true); }

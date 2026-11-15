@@ -57,6 +57,23 @@
           </div>
           <figure class="map-figure">
             <div class="map-wrap" data-el="map" tabindex="0" role="application" data-i18n-aria="common.mapLabel"></div>
+            <div class="hud" aria-hidden="true">
+              <div class="hud-col hud-l">
+                <p class="hud-date" data-el="hDate"></p>
+                <p class="hud-big" data-el="hBig"></p>
+                <p class="hud-label" data-el="hBigLabel"></p>
+                <p class="hud-level"><span data-el="hLevel"></span><span class="hud-bar"><i data-el="hBar"></i></span></p>
+                <dl class="hud-stats" data-el="hStats"></dl>
+              </div>
+              <div class="hud-col hud-r">
+                <p class="hud-title" data-el="hTrendTitle"></p>
+                <svg class="spark" data-el="hSpark" viewBox="0 0 240 90"></svg>
+                <p class="hud-axis"><span data-el="hFirst"></span><span data-el="hLast"></span></p>
+                <p class="hud-title" data-i18n="hud.hear"></p>
+                <p class="hud-text" data-i18n="${id}.instrument"></p>
+                <p class="hud-text hud-muted" data-i18n="hud.rule"></p>
+              </div>
+            </div>
             <figcaption class="sr-only" data-el="alt"></figcaption>
           </figure>
           <p class="globe-hint" data-i18n="view.hint"></p>
@@ -353,6 +370,7 @@
     const lk = levelKey(fr.rank);
     el.level.textContent = t('common.level') + ': ' + t(lk);
     el.level.dataset.level = lk.split('.')[1];
+    this.updateHud();
     const text = this.describeText();
     el.desc.textContent = text;
     el.alt.textContent = text;
@@ -366,6 +384,45 @@
     if (next.image) { const im = new Image(); im.src = next.image; }
     if (this.mode === 'explore') this.updateReadout(true);
     else el.readout.textContent = '';
+  };
+
+  // ---------- Numbers beside the globe (wide screens) ----------
+  // The same numbers as the side column, big enough to read from a few metres, plus the trend of the
+  // main number over every date of the period, with the current date marked.
+  const NUMERIC = { count: s => s.count, mean: s => s.mean, shareAbove: s => s.shareAbove, meanWhere: s => s.meanWhere, meanIntensity: s => s.meanIntensity };
+  P.updateHud = function () {
+    const el = this.el, ds = this.ds, fr = this.frame(), stats = this.cfg.stats, n = ds.frames.length;
+    const [key0, label0] = stats[0];
+    el.hDate.textContent = EBE.i18n.date(fr.t);
+    el.hBig.textContent = this.statValue(key0, fr.summary);
+    el.hBigLabel.textContent = t(this.id + '.stat.' + label0);
+    el.hLevel.textContent = t('common.level') + ': ' + t(levelKey(fr.rank));
+    el.hBar.style.width = Math.round(6 + 94 * fr.rank) + '%';
+    el.hStats.innerHTML = '';
+    stats.slice(1).forEach(([key, label]) => {
+      const dt = document.createElement('dt'); dt.textContent = t(this.id + '.stat.' + label);
+      const dd = document.createElement('dd'); dd.textContent = this.statValue(key, fr.summary);
+      el.hStats.appendChild(dt); el.hStats.appendChild(dd);
+    });
+    const get = NUMERIC[key0];
+    if (!get) return;
+    if (!this.series) {
+      const v = ds.frames.map(f => get(f.summary) || 0);
+      const lo = Math.min(...v), hi = Math.max(...v), span = (hi - lo) || 1;
+      const pts = v.map((x, i) => [6 + i / Math.max(1, n - 1) * 228, 82 - (x - lo) / span * 72]);
+      this.series = { lo, hi, pts };
+      const line = pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
+      el.hSpark.innerHTML = '<polygon class="spark-area" points="6,84 ' + line + ' 234,84"/><polyline class="spark-line" points="' + line + '"/>' +
+        '<line class="spark-now-line" x1="0" y1="4" x2="0" y2="84"/><circle class="spark-now" r="4.5"/>';
+    }
+    const p = this.series.pts[this.k];
+    const nowLine = el.hSpark.querySelector('.spark-now-line'), dot = el.hSpark.querySelector('.spark-now');
+    nowLine.setAttribute('x1', p[0]); nowLine.setAttribute('x2', p[0]);
+    dot.setAttribute('cx', p[0]); dot.setAttribute('cy', p[1]);
+    const fake = x => { const s = {}; s[key0] = x; return s; };
+    el.hTrendTitle.textContent = t('hud.trend', { n, lo: this.statValue(key0, fake(this.series.lo)), hi: this.statValue(key0, fake(this.series.hi)) });
+    el.hFirst.textContent = EBE.i18n.date(ds.frames[0].t).split(',').slice(0, 2).join(',');
+    el.hLast.textContent = EBE.i18n.date(ds.frames[n - 1].t).split(',').slice(0, 2).join(',');
   };
 
   // ---------- Globe or flat map ----------

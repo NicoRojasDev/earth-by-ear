@@ -1,14 +1,14 @@
 # Space Apps 2026 submission texts (ready to copy)
 
-> Updated Sunday 15 Nov (blind mode added). Draft written on Saturday 14 Nov. Replace every `[TODO …]` with the real numbers before submitting (game results on Sunday). Count the summary words again after editing: it must stay between 50 and 200.
+> Final version, Sunday 15 Nov 2026 (3D globe and listening game results). Only the video link is still to be filled in. The summary must stay between 50 and 200 words.
 
 ## 1. Project name
 
 Earth by Ear
 
-## 2. High-level summary (173 words, limit 50–200)
+## 2. High-level summary (186 words, limit 50–200)
 
-Earth by Ear turns NASA's Earth Information Center (EIC) visualizations into live, touchable sound, built first for the giant screens of museums and science centers, where the EIC already lives. Five EIC visuals (active fires, ocean heat, rain and snow, near-surface air temperature and air pollution) each get their own instrument, and every sound is computed from values read out of the real EIC frames with each visualization's own colorbar. Visitors touch the map and the room hears the planet; a simple blind and low-vision mode speaks everything aloud: the continent or ocean under the finger, the value, and full details of any point. A kiosk mode returns to a turning-Earth welcome screen between visitors, and a QR code opens the same app on any phone. Our fire readings rise and fall with NASA FIRMS detections (rank correlation 0.93). Climate exhibits are mostly visual; Earth by Ear opens them to blind and low-vision people and to anyone who learns by listening, starting with the fires near our home in Santiago del Estero, Argentina.
+Earth by Ear turns NASA's Earth Information Center (EIC) visualizations into live, touchable sound, built first for the giant screens of museums and science centers, where the EIC already lives. Five EIC visuals (active fires, ocean heat, rain and snow, near-surface air temperature and air pollution) each get their own instrument, and every sound is computed from values read out of the real EIC frames with each visualization's own colorbar. Visitors turn a 3D globe wrapped in the real frames, point at any place and the room hears the planet; a simple blind and low-vision mode speaks everything aloud. A kiosk mode returns to a turning-Earth welcome screen between visitors, and a QR code opens the same app on any phone. In a listening test, 19 of 20 people named the phenomenon by ear (chance: 4 of 20), and our fire readings rise and fall with NASA FIRMS detections (rank correlation 0.93). Climate exhibits are mostly visual; Earth by Ear opens them to blind and low-vision people and to anyone who learns by listening, starting with the fires near our home in Santiago del Estero, Argentina.
 
 ## 3. Demo link
 

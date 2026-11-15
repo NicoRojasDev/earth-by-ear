@@ -372,3 +372,37 @@ body.blind .ph-side { display: block; }
   body.docked:not(.blind) .intro { grid-column: 2; grid-row: 1; margin: 0; max-width: 90ch; }
   body.docked:not(.blind) .lead { margin-bottom: 10px; }
 }
+
+/* Home button, top left, on every screen */
+.brand-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.brand-row h1 { margin: 0; }
+.home-btn { gap: 8px; padding: 6px 14px; min-height: 44px; }
+body.blind .home-btn { min-height: 52px; }
+
+/* Numbers beside the globe on wide screens (decorative copy of the side column, plus the trend) */
+.map-figure { position: relative; }
+.hud { display: none; position: absolute; inset: 0; pointer-events: none; padding: 22px 24px; justify-content: space-between; }
+.map-figure:has(.map.sphere.wide) .hud { display: flex; }
+.hud-col { width: var(--hud-w, 240px); display: flex; flex-direction: column; gap: 6px; }
+.hud-r { text-align: left; }
+.hud p { margin: 0; }
+.hud-date { font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+.hud-big { font-size: clamp(2rem, 3.2vw, 3.6rem); font-weight: 800; line-height: 1.05; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.hud-label { color: var(--muted); margin-bottom: 8px !important; }
+.hud-level { display: flex; flex-direction: column; gap: 6px; font-weight: 700; margin-bottom: 10px !important; }
+.hud-bar { display: block; height: 6px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+.hud-bar i { display: block; height: 100%; background: #f2f2f2; border-radius: 3px; transition: width 0.3s; }
+.hud-stats { display: grid; grid-template-columns: 1fr; gap: 2px; margin: 0; }
+.hud-stats dt { color: var(--muted); font-size: 0.9rem; }
+.hud-stats dd { margin: 0 0 8px; font-weight: 700; }
+.hud-title { color: var(--muted); font-size: 0.9rem; font-weight: 600; }
+.spark { width: 100%; height: auto; max-height: 120px; overflow: visible; margin-top: 4px; }
+.spark-area { fill: rgba(255,255,255,0.08); stroke: none; }
+.spark-line { fill: none; stroke: #e6e6e6; stroke-width: 2; stroke-linejoin: round; }
+.spark-now-line { stroke: rgba(255,255,255,0.35); stroke-width: 1; stroke-dasharray: 3 3; }
+.spark-now { fill: #ffffff; stroke: #0b0b0b; stroke-width: 2; }
+.hud-axis { display: flex; justify-content: space-between; color: var(--muted); font-size: 0.8rem; margin-bottom: 14px !important; }
+.hud-text { font-weight: 600; }
+.hud-muted { color: var(--muted); font-weight: 500; font-size: 0.92rem; }
+@media (prefers-reduced-motion: reduce) { .hud-bar i { transition: none; } }
+.ph-controls .readout:empty { min-height: 0; margin: 0; }
