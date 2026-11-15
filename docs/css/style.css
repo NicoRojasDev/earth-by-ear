@@ -84,6 +84,7 @@ h3 { font-size: 1.1rem; color: var(--muted); }
 .map.interactive { touch-action: none; cursor: crosshair; }
 .map.no-image { background: radial-gradient(ellipse at center, #1c1c1c 0%, #0d0d0d 75%); }
 .map-img, .map-overlay { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.map-globe { position: absolute; display: none; }
 .map-img { object-fit: fill; }
 .map.no-image .map-img { display: none; }
 .timeline { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 10px 0; }
@@ -177,7 +178,7 @@ body.blind .btn { min-height: 52px; }
 body.blind .tabbar, body.blind .foot, body.blind .skip,
 body.blind #btn-sound, body.blind #btn-voice, body.blind .controls .lang, body.blind .tagline, body.blind .intro,
 body.blind .ph-head, body.blind .lead, body.blind .timeline, body.blind .modes, body.blind .help, body.blind .keys,
-body.blind .ph-side { display: none; }
+body.blind .ph-data { display: none; }
 body.blind .top { grid-template-columns: 1fr auto; padding: 8px 0 0; }
 body.blind .top h1 { font-size: 1.35rem; }
 /* Button size follows the screen: about 9% of its height on phones and tablets (76 px on a phone). */
@@ -245,7 +246,7 @@ body.blind .blind-toggles .btn { min-height: calc(var(--bh) * 0.8); flex-wrap: w
 @media (min-width: 1600px) {
   :root { font-size: 19px; }
   body { max-width: none; padding: 0 48px 40px; }
-  .ph-grid { grid-template-columns: minmax(0, 3fr) minmax(340px, 1fr); }
+  .ph-grid { grid-template-columns: minmax(0, 1fr) minmax(400px, 27%); gap: 24px; }
   .globe { width: min(38vh, 460px); height: min(38vh, 460px); }
   .qr { width: 150px; height: 150px; }
   .welcome-choices { min-height: 300px; }
@@ -333,3 +334,41 @@ body.docked.blind .map-wrap { margin-inline: auto; }
 body.docked.blind .readout { font-size: var(--bf); }
 /* The loading line would push the map down while a topic loads; on the big screen it is only for screen readers. */
 body.docked.blind .panel .status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; margin: 0; }
+
+/* Globe view: the same frame wrapped on a sphere, with a soft halo, on a deep background. */
+.map.sphere { aspect-ratio: 16 / 10; touch-action: none; cursor: grab;
+  background: radial-gradient(ellipse at 50% 45%, #1b1b1b 0%, #0b0b0b 55%, #050505 100%); }
+.map.sphere.interactive { cursor: crosshair; }
+.map.sphere .map-img { visibility: hidden; }
+.map.sphere .map-globe { display: block; }
+@media (max-width: 700px) { .map.sphere { aspect-ratio: 1 / 1; } }
+.viewbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+.seg { display: inline-flex; border: 1px solid var(--line-2); border-radius: 12px; padding: 3px; gap: 3px; background: var(--bg); }
+.seg-btn { border: 0; background: transparent; color: var(--muted); padding: 6px 14px; min-height: 40px; }
+.seg-btn[aria-pressed="true"] { background: var(--text); color: var(--bg); font-weight: 700; }
+.turns { display: none; gap: 8px; }
+.is-globe .turns { display: inline-flex; }
+.turns .btn.icon { min-width: 44px; min-height: 44px; justify-content: center; }
+.globe-hint { display: none; margin: 8px 0 0; color: var(--muted); font-size: 0.92rem; }
+.is-globe .globe-hint { display: block; }
+body.blind .viewbar, body.blind .globe-hint { display: none !important; }
+
+/* Right column: the time controls, the mode, the spoken line, then the numbers. On phones it simply
+   follows the map, in the same order as before. */
+.ph-controls { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+.ph-controls .timeline { margin: 0; }
+.ph-controls .timeline .date { order: 4; margin-left: auto; text-align: right; }
+.ph-controls .timeline .slider { order: 5; flex-basis: 100%; }
+.ph-controls .timeline .speed { order: 6; }
+.readout:not(:empty) { background: var(--panel-2); border: 1px solid var(--line); border-left: 3px solid var(--text); border-radius: 10px; padding: 10px 12px; margin: 4px 0; }
+body.blind .readout:not(:empty) { background: none; border: 0; padding: 0; }
+.ph-data { border-top: 1px solid var(--line); padding-top: 14px; }
+body.blind .ph-side { display: block; }
+
+/* Big screens, standard mode: a compact header (title and intro side by side) so the globe fits. */
+@media (min-width: 1600px) {
+  body.docked:not(.blind) .top { grid-template-columns: auto minmax(0, 1fr); column-gap: 40px; align-items: center; padding: 14px 0 12px; }
+  body.docked:not(.blind) .top h1 { margin: 0; }
+  body.docked:not(.blind) .intro { grid-column: 2; grid-row: 1; margin: 0; max-width: 90ch; }
+  body.docked:not(.blind) .lead { margin-bottom: 10px; }
+}

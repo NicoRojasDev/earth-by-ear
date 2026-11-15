@@ -160,7 +160,7 @@
   function hideHelp() {
     document.body.classList.remove('helpopen');
     $('#blind-help').hidden = true;
-    fitBlindMap();
+    fitMap();
   }
 
   function startBlind() {
@@ -195,7 +195,7 @@
   function padForDock() {
     const dock = $('#dock');
     document.body.style.paddingBottom = DOCK_MQ.matches ? (dock.offsetHeight + 24) + 'px' : '';
-    fitBlindMap();
+    fitMap();
   }
 
   // Blind mode on a big screen: the topic's buttons (Repeat, Details, Listen over time, the cursor arrows
@@ -212,20 +212,27 @@
     }
     padForDock();
   }
-  // The map takes the space left above the dock, keeping the 2:1 shape of the world map, so the page
-  // never needs scrolling.
-  function fitBlindMap() {
+  // Big screens: the map takes the space left above the dock, so the page does not need scrolling to see
+  // it. Blind mode: under the map there is only the spoken line. Standard mode: the hint line.
+  // The flat map keeps its 2:1 shape (narrower if needed); the globe sits in the middle of its box.
+  function fitMap() {
     document.querySelectorAll('.panel .map').forEach(m => { m.style.height = ''; m.parentNode.style.maxWidth = ''; });
-    if (!(DOCK_MQ.matches && EBE.a11y.isBlind() && current)) return;
+    if (!(DOCK_MQ.matches && current)) return;
     const map = current.panel.querySelector('.map');
     if (!map || current.panel.hidden || document.body.classList.contains('helpopen')) return;
+    const blind = EBE.a11y.isBlind(), sphere = map.classList.contains('sphere');
     const top = map.getBoundingClientRect().top + window.scrollY;
-    let h = Math.min(window.innerHeight - $('#dock').offsetHeight - top - 72, map.offsetWidth / 2);
-    map.style.height = Math.max(240, Math.round(h)) + 'px';
-    const over = document.documentElement.scrollHeight - window.innerHeight;
-    if (over > 0) { h -= over; map.style.height = Math.max(240, Math.round(h)) + 'px'; }
-    map.parentNode.style.maxWidth = Math.round(Math.max(240, h) * 2 + 2) + 'px';
+    const below = blind ? 72 : (() => { const hint = current.panel.querySelector('.globe-hint'); return (hint && hint.offsetHeight ? hint.offsetHeight + 12 : 0) + 28; })();
+    let h = Math.min(window.innerHeight - $('#dock').offsetHeight - top - below, map.offsetWidth / (sphere ? 1.25 : 2));
+    map.style.height = Math.max(blind ? 240 : 360, Math.round(h)) + 'px';
+    if (blind) {
+      const over = document.documentElement.scrollHeight - window.innerHeight;
+      if (over > 0) { h -= over; map.style.height = Math.max(240, Math.round(h)) + 'px'; }
+    }
+    if (!sphere) map.parentNode.style.maxWidth = Math.round(Math.max(240, h) * 2 + 2) + 'px';
   }
+  EBE.relayout = () => fitMap();
+
 
   function setVoice(on) {
     $('#btn-voice').setAttribute('aria-pressed', on ? 'true' : 'false');
@@ -306,7 +313,7 @@
     placeDock();
     if (DOCK_MQ.addEventListener) DOCK_MQ.addEventListener('change', placeDock);
     if (window.ResizeObserver) new ResizeObserver(padForDock).observe($('#dock'));
-    window.addEventListener('resize', fitBlindMap);
+    window.addEventListener('resize', fitMap);
 
     $('#btn-sound').addEventListener('click', () => {
       if (EBE.audio.isOn()) { EBE.audio.disable(); EBE.audio.mute(true); }

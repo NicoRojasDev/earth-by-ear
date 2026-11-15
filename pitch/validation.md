@@ -1,6 +1,6 @@
 # Validation
 
-> Written with the assistance of Claude (Anthropic) for NASA Space Apps 2026. Last update: Saturday 14 Nov 2026.
+> Written with the assistance of Claude (Anthropic) for NASA Space Apps 2026. Last update: Sunday 15 Nov 2026 (listening game results).
 
 Earth by Ear makes three claims. Each one is checked here with data, and the limits are stated.
 
@@ -75,12 +75,27 @@ Changes: louder and slightly longer fire crackles plus a stronger fire "roar" be
 - Nobody helps during the rounds. Results are copied with **Copy results (CSV)**, one file per player in [`game-results/`](game-results/README.md). No names are recorded.
 - Analysis: `scripts/analyze_game.py` (or `scripts/windows/13-analyze-game.bat`). Null hypotheses: players answer at random, so 20% for the phenomenon and 33% for the intensity. Test: one-sided exact binomial test.
 
-**Results:** [TODO after the game sessions: copy the numbers from `game-results/summary.md`]
+**Results (Sunday 15 Nov 2026, 20 people).** The team recorded one result per person: whether they named the right phenomenon and the right intensity.
 
-| | Correct | Chance | p-value |
-|---|---|---|---|
-| Phenomenon | [TODO] | 20% | [TODO] |
-| Intensity | [TODO] | 33% | [TODO] |
+| Outcome | People |
+|---|---|
+| Phenomenon **and** intensity right | 17 |
+| Phenomenon right, intensity wrong | 2 |
+| Both wrong | 1 |
+
+| | Correct | 95% interval (Wilson) | Chance | One-sided binomial p-value |
+|---|---|---|---|---|
+| Phenomenon (5 options) | **19 / 20 (95%)** | 76% – 99% | 20% | **< 0.0001** (8.5 × 10⁻¹³) |
+| Intensity (low / medium / high) | **17 / 20 (85%)** | 64% – 95% | 33% | **< 0.0001** (2.8 × 10⁻⁶) |
+| Both at once | **17 / 20 (85%)** | 64% – 95% | 6.7% | **< 0.0001** (9.5 × 10⁻¹⁸) |
+
+Every person who missed the intensity still recognized the phenomenon, so the five instruments are easy to tell apart; telling low, medium and high apart is the harder part (17 of the 19 who named the phenomenon also got the intensity).
+
+**What it does not show, honestly**
+
+- 20 people is a small sample, and they were people around the team, so they are not a random sample of museum visitors. The intervals above show how much the true accuracy could differ.
+- We kept one result per person, not the per-round CSV files, so this summary has no confusion matrix (which phenomenon is mistaken for which).
+- We did not record how many players were blind or had low vision; testing with blind and low-vision visitors is the next step (see the README).
 
 ---
 

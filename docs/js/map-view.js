@@ -173,6 +173,24 @@
   EBE.geo = { haversineKm, bearing, dir8, placeName, coords, isLand, regionKey, continentKey, seaKey };
 
   // ---------- map view ----------
+  // Two ways to draw the same data: the flat map (the real EIC frame as an image) and a 3D globe
+  // wrapped in that same frame. Both share the points, flashes and Explore cursor, and both turn a
+  // touch into a longitude and latitude, so the rest of the app does not need to know which is shown.
+  const DEG = 180 / Math.PI;
+  const GLOBE_MAX_PX = 720;          // the frames are 1024 px wide: half a world fits in ~512 px
+  const SPIN_DEG_S = 4;              // gentle turn while listening (one turn in 90 s)
+  const TILT_MAX = 65;
+
+  function glowSprite(bright) {
+    const c = document.createElement('canvas'); c.width = c.height = 64;
+    const g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+    gr.addColorStop(0, bright ? 'rgba(255,255,255,0.95)' : 'rgba(235,235,235,0.85)');
+    gr.addColorStop(0.35, 'rgba(255,255,255,0.45)');
+    gr.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
+    return c;
+  }
+
   function MapView(root, opts) {
     this.opts = opts || {};
     this.root = root;
@@ -180,6 +198,12 @@
     this.flashes = [];
     this.cursor = { lon: -63.5, lat: -27.8, show: false, radiusKm: 0 };
     this.interactive = false;
+    this.view = 'flat';
+    this.lon0 = -60; this.lat0 = -15;          // globe centre: the Americas and the Atlantic
+    this.target = null;                         // where the globe is turning to (keyboard, buttons)
+    this.autoSpin = false; this.lastTouch = 0;
+    this.tex = null; this.texDirty = true; this.globeDirty = true; this.lastGlobe = 0;
+    this.sprites = [glowSprite(false), glowSprite(true)];
 
     const frame = document.createElement('div');
     frame.className = 'map';
@@ -187,49 +211,193 @@
     this.img.className = 'map-img';
     this.img.alt = '';
     this.img.decoding = 'async';
+    this.img.addEventListener('load', () => { this.texDirty = true; this.globeDirty = true; });
+    this.base = document.createElement('canvas');
+    this.base.className = 'map-globe';
+    this.base.setAttribute('aria-hidden', 'true');
     this.canvas = document.createElement('canvas');
     this.canvas.className = 'map-overlay';
     this.canvas.setAttribute('aria-hidden', 'true');
-    frame.appendChild(this.img); frame.appendChild(this.canvas);
+    frame.appendChild(this.img); frame.appendChild(this.base); frame.appendChild(this.canvas);
     root.appendChild(frame);
     this.frame = frame;
     this.ctx = this.canvas.getContext('2d');
+    this.bctx = this.base.getContext('2d');
     this.layer = document.createElement('canvas');
-
-    const onPointer = e => {
-      if (!this.interactive) return;
-      const r = this.frame.getBoundingClientRect();
-      const x = clamp(e.clientX - r.left, 0, r.width), y = clamp(e.clientY - r.top, 0, r.height);
-      const lon = x / r.width * 360 - 180, lat = 90 - y / r.height * 180;
-      if (this.opts.onPointer) this.opts.onPointer(lon, lat, e.type);
-    };
-    frame.addEventListener('pointerdown', e => { if (this.interactive) { frame.setPointerCapture(e.pointerId); onPointer(e); } });
-    frame.addEventListener('pointermove', e => { if (this.interactive && (e.buttons || e.pointerType === 'mouse')) onPointer(e); });
-    // Lifting the finger (or releasing the mouse) after exploring.
-    const onEnd = () => { if (this.interactive && this.opts.onPointerEnd) this.opts.onPointerEnd(); };
-    frame.addEventListener('pointerup', onEnd);
-    frame.addEventListener('pointercancel', onEnd);
+    this.bindPointers();
 
     if ('ResizeObserver' in window) new ResizeObserver(() => this.resize()).observe(frame);
     window.addEventListener('resize', () => this.resize());
     this.resize();
-    const loop = () => { if (this.frame.offsetParent !== null) this.draw(); requestAnimationFrame(loop); };
+    let prev = 0;
+    const loop = t => {
+      if (this.frame.offsetParent !== null) this.tick(t, prev ? Math.min(100, t - prev) : 0);
+      prev = t;
+      requestAnimationFrame(loop);
+    };
     requestAnimationFrame(loop);
   }
 
+  // ---------- pointers ----------
+  // Flat map: one pointer explores. Globe: a mouse drag turns it and moving the mouse explores;
+  // on a touch screen two fingers turn it (left hand) while one finger points (right hand).
+  MapView.prototype.bindPointers = function () {
+    const frame = this.frame;
+    const local = e => { const r = frame.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+    const touches = new Map();        // pointerId -> { x, y, role: 'wait' | 'cursor' | 'turn' | 'spin', t }
+    let mouse = null;                 // mouse or pen drag on the globe
+    const send = (x, y, type) => {
+      if (!this.interactive || !this.opts.onPointer) return;
+      const ll = this.fromXY(x, y);
+      if (ll) this.opts.onPointer(ll[0], ll[1], type);
+    };
+    const end = () => { if (this.interactive && this.opts.onPointerEnd) this.opts.onPointerEnd(); };
+    const turnBy = (dx, dy) => {
+      const k = DEG / Math.max(40, this.R);
+      this.lon0 = wrap(this.lon0 - dx * k);
+      this.lat0 = clamp(this.lat0 + dy * k, -TILT_MAX, TILT_MAX);
+      this.target = null; this.lastTouch = performance.now(); this.globeDirty = true;
+    };
+    const decide = id => {          // a lone finger that was not joined by a second one
+      const p = touches.get(id);
+      if (!p || p.role !== 'wait') return;
+      p.role = this.interactive ? 'cursor' : 'spin';
+      if (p.role === 'cursor') send(p.x, p.y, 'pointerdown');
+    };
+
+    frame.addEventListener('pointerdown', e => {
+      if (e.button > 0) return;
+      const [x, y] = local(e);
+      if (this.view !== 'globe') {
+        if (this.interactive) { frame.setPointerCapture(e.pointerId); send(x, y, e.type); }
+        return;
+      }
+      try { frame.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+      this.lastTouch = performance.now();
+      if (e.pointerType !== 'touch') {
+        mouse = { id: e.pointerId, x, y, moved: false };
+        send(x, y, e.type);
+        return;
+      }
+      // Touch: a second finger arriving soon after, or close to, a waiting one makes a turning pair.
+      const now = performance.now();
+      const partner = [...touches.entries()].find(([, p]) => p.role === 'wait' || (p.role === 'spin' && now - p.t < 400) ||
+        (p.role !== 'cursor' && p.role !== 'turn' && Math.hypot(p.x - x, p.y - y) < this.R * 0.6));
+      if (partner) {
+        partner[1].role = 'turn'; clearTimeout(partner[1].timer);
+        touches.set(e.pointerId, { x, y, role: 'turn', t: now });
+        return;
+      }
+      const p = { x, y, role: 'wait', t: now };
+      p.timer = setTimeout(() => decide(e.pointerId), 140);
+      touches.set(e.pointerId, p);
+    });
+
+    frame.addEventListener('pointermove', e => {
+      const [x, y] = local(e);
+      if (this.view !== 'globe') {
+        if (this.interactive && (e.buttons || e.pointerType === 'mouse')) send(clamp(x, 0, this.w), clamp(y, 0, this.h), e.type);
+        return;
+      }
+      if (e.pointerType !== 'touch') {
+        if (mouse && mouse.id === e.pointerId && e.buttons) {
+          const dx = x - mouse.x, dy = y - mouse.y;
+          if (mouse.moved || Math.hypot(dx, dy) > 4) { mouse.moved = true; turnBy(dx, dy); mouse.x = x; mouse.y = y; }
+        } else if (!e.buttons) send(x, y, e.type);
+        return;
+      }
+      const p = touches.get(e.pointerId);
+      if (!p) return;
+      const dx = x - p.x, dy = y - p.y;
+      if (p.role === 'wait' && Math.hypot(x - p.x, y - p.y) > 12) { clearTimeout(p.timer); decide(e.pointerId); }
+      if (p.role === 'cursor') send(x, y, e.type);
+      else if (p.role === 'spin') turnBy(dx, dy);
+      else if (p.role === 'turn') {
+        const n = [...touches.values()].filter(q => q.role === 'turn').length || 1;
+        turnBy(dx / n, dy / n);       // the pair moves the globe by its average movement
+      }
+      if (p.role !== 'wait') { p.x = x; p.y = y; }
+    });
+
+    const up = e => {
+      if (this.view !== 'globe') { if (e.type === 'pointerup' || e.type === 'pointercancel') end(); return; }
+      if (e.pointerType !== 'touch') {
+        if (mouse && mouse.id === e.pointerId) { if (!mouse.moved) end(); mouse = null; }
+        return;
+      }
+      const p = touches.get(e.pointerId);
+      if (!p) return;
+      clearTimeout(p.timer);
+      if (p.role === 'wait' && this.interactive) { send(p.x, p.y, 'pointerdown'); p.role = 'cursor'; }   // a quick tap
+      touches.delete(e.pointerId);
+      if (p.role === 'cursor') end();
+      if (p.role === 'turn') touches.forEach(q => { if (q.role === 'turn') q.role = 'done'; });
+    };
+    frame.addEventListener('pointerup', up);
+    frame.addEventListener('pointercancel', up);
+  };
+
+  function wrap(lon) { lon = ((lon + 180) % 360 + 360) % 360 - 180; return lon; }
+
+  // ---------- size and projection ----------
   MapView.prototype.resize = function () {
     const r = this.frame.getBoundingClientRect();
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     this.w = Math.max(1, r.width); this.h = Math.max(1, r.height); this.dpr = dpr;
     [this.canvas, this.layer].forEach(c => { c.width = Math.round(this.w * dpr); c.height = Math.round(this.h * dpr); });
+    this.cx = this.w / 2; this.cy = this.h / 2;
+    this.R = Math.max(10, Math.min(this.w, this.h) / 2 * 0.9);
+    const d = Math.round(this.R * 2);
+    Object.assign(this.base.style, { width: d + 'px', height: d + 'px', left: Math.round(this.cx - d / 2) + 'px', top: Math.round(this.cy - d / 2) + 'px' });
+    const n = Math.max(64, Math.min(GLOBE_MAX_PX, Math.round(d * dpr)));
+    if (n !== this.base.width) { this.base.width = this.base.height = n; this.lut = null; this.out = null; }
+    this.globeDirty = true;
     this.renderLayer();
   };
 
-  MapView.prototype.toXY = function (lon, lat) { return [(lon + 180) / 360 * this.w, (90 - lat) / 180 * this.h]; };
+  // Screen position of a place, and whether it is on the visible side (flat map: always).
+  MapView.prototype.proj = function (lon, lat) {
+    if (this.view !== 'globe') return [(lon + 180) / 360 * this.w, (90 - lat) / 180 * this.h, 1];
+    const p = lat * RAD, p0 = this.lat0 * RAD, dl = (lon - this.lon0) * RAD;
+    const cosc = Math.sin(p0) * Math.sin(p) + Math.cos(p0) * Math.cos(p) * Math.cos(dl);
+    const x = Math.cos(p) * Math.sin(dl);
+    const y = Math.cos(p0) * Math.sin(p) - Math.sin(p0) * Math.cos(p) * Math.cos(dl);
+    return [this.cx + x * this.R, this.cy - y * this.R, cosc];
+  };
+  MapView.prototype.toXY = function (lon, lat) { return this.proj(lon, lat); };
+
+  // Place under a screen position, or null outside the globe.
+  MapView.prototype.fromXY = function (x, y) {
+    if (this.view !== 'globe') return [x / this.w * 360 - 180, 90 - y / this.h * 180];
+    const nx = (x - this.cx) / this.R, ny = (this.cy - y) / this.R, r2 = nx * nx + ny * ny;
+    if (r2 > 1) return null;
+    const nz = Math.sqrt(1 - r2), p0 = this.lat0 * RAD;
+    const lat = Math.asin(clamp(nz * Math.sin(p0) + ny * Math.cos(p0), -1, 1)) * DEG;
+    const lon = wrap(this.lon0 + Math.atan2(nx, nz * Math.cos(p0) - ny * Math.sin(p0)) * DEG);
+    return [lon, lat];
+  };
+
+  // ---------- public API ----------
+  MapView.prototype.setView = function (view) {
+    view = view === 'globe' ? 'globe' : 'flat';
+    if (view === this.view) return;
+    this.view = view;
+    this.frame.classList.toggle('sphere', view === 'globe');
+    this.resize();
+  };
+
+  // Turn the globe by some degrees of longitude (buttons), smoothly.
+  MapView.prototype.turn = function (dLon) {
+    const from = this.target ? this.target[0] : this.lon0;
+    this.target = [wrap(from + dLon), this.lat0];
+    this.lastTouch = performance.now();
+  };
+
+  MapView.prototype.setAutoSpin = function (on) { this.autoSpin = !!on; };
 
   MapView.prototype.setImage = function (src, alt) {
     if (src) { this.frame.classList.remove('no-image'); if (this.img.getAttribute('src') !== src) this.img.src = src; }
-    else { this.frame.classList.add('no-image'); this.img.removeAttribute('src'); }
+    else { this.frame.classList.add('no-image'); this.img.removeAttribute('src'); this.tex = null; this.globeDirty = true; }
     this.img.alt = alt || '';
   };
 
@@ -246,34 +414,126 @@
     if (this.flashes.length > 120) this.flashes.shift();
   };
 
-  MapView.prototype.setCursor = function (lon, lat, show, radiusKm) {
+  // follow: when the cursor moves with the keyboard, the globe turns to keep it in front.
+  MapView.prototype.setCursor = function (lon, lat, show, radiusKm, follow) {
     this.cursor = { lon, lat, show: !!show, radiusKm: radiusKm || 0 };
+    if (show && follow && this.view === 'globe' && this.proj(lon, lat)[2] < 0.55) this.target = [lon, clamp(lat, -TILT_MAX, TILT_MAX)];
   };
 
-  // Static layer: graticule when there is no image, then the point glows.
+  // ---------- drawing ----------
+  MapView.prototype.loadTexture = function () {
+    this.texDirty = false;
+    if (!this.img.complete || !this.img.naturalWidth || this.frame.classList.contains('no-image')) return;
+    const c = this.texCanvas || (this.texCanvas = document.createElement('canvas'));
+    c.width = this.texW = this.img.naturalWidth; c.height = this.texH = this.img.naturalHeight;
+    const g = c.getContext('2d', { willReadFrequently: true });
+    g.drawImage(this.img, 0, 0);
+    try { this.tex = g.getImageData(0, 0, this.texW, this.texH).data; } catch (e) { this.tex = null; }
+    this.globeDirty = true;
+  };
+
+  // For every pixel of the disc: its longitude (relative to the centre), its row in the frame and how
+  // much light it gets (darker at the edge and away from a light at the top left, like a real sphere).
+  MapView.prototype.buildLut = function () {
+    const n = this.base.width, p0 = this.lat0 * RAD, s0 = Math.sin(p0), c0 = Math.cos(p0);
+    const lut = this.lut && this.lut.length === n * n * 3 ? this.lut : new Float32Array(n * n * 3);
+    const L = [-0.45, 0.55, 0.7], ln = Math.hypot(L[0], L[1], L[2]);
+    for (let y = 0; y < n; y++) {
+      const ny = 1 - (y + 0.5) / n * 2;
+      for (let x = 0; x < n; x++) {
+        const k = (y * n + x) * 3, nx = (x + 0.5) / n * 2 - 1, r2 = nx * nx + ny * ny;
+        if (r2 > 1) { lut[k] = -9; continue; }
+        const nz = Math.sqrt(1 - r2);
+        const lat = Math.asin(Math.max(-1, Math.min(1, nz * s0 + ny * c0)));
+        const lon = Math.atan2(nx, nz * c0 - ny * s0);
+        lut[k] = lon / (2 * Math.PI);
+        lut[k + 1] = Math.min(0.9999, Math.max(0, 0.5 - lat / Math.PI));
+        const lambert = Math.max(0, (nx * L[0] + ny * L[1] + nz * L[2]) / ln);
+        lut[k + 2] = (0.42 + 0.58 * Math.pow(nz, 0.55)) * (0.78 + 0.32 * lambert);
+      }
+    }
+    this.lut = lut; this.lutTilt = this.lat0;
+  };
+
+  MapView.prototype.renderGlobe = function () {
+    this.globeDirty = false;
+    const n = this.base.width;
+    if (!this.lut || this.lutTilt !== this.lat0) this.buildLut();
+    if (!this.out || this.out.width !== n) this.out = this.bctx.createImageData(n, n);
+    const d = this.out.data, lut = this.lut, tex = this.tex, W = this.texW, H = this.texH;
+    const off = this.lon0 / 360 + 0.5;
+    for (let k = 0, p = 0, m = n * n; k < m; k++, p += 4) {
+      const u = lut[k * 3];
+      if (u < -1) { d[p + 3] = 0; continue; }
+      const s = Math.min(1.15, lut[k * 3 + 2]);
+      if (!tex) { d[p] = d[p + 1] = d[p + 2] = 40 * s; d[p + 3] = 255; continue; }
+      let uu = u + off; uu -= Math.floor(uu);
+      const q = (((lut[k * 3 + 1] * H) | 0) * W + ((uu * W) | 0)) * 4;
+      d[p] = Math.min(255, tex[q] * s); d[p + 1] = Math.min(255, tex[q + 1] * s); d[p + 2] = Math.min(255, tex[q + 2] * s); d[p + 3] = 255;
+    }
+    this.bctx.putImageData(this.out, 0, 0);
+  };
+
+  // Static layer: halo and graticule (globe) or graticule without image (flat), then the point glows.
   MapView.prototype.renderLayer = function () {
     const c = this.layer.getContext('2d'), dpr = this.dpr || 1;
     c.setTransform(dpr, 0, 0, dpr, 0, 0);
     c.clearRect(0, 0, this.w, this.h);
-    if (this.frame.classList.contains('no-image')) {
+    const globe = this.view === 'globe';
+    if (globe) {
+      // A few faint stars (always in the same places) and a soft atmosphere around the planet.
+      let seed = 7;
+      const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+      c.fillStyle = '#ffffff';
+      for (let i = 0; i < 160; i++) {
+        const x = rnd() * this.w, y = rnd() * this.h, a = 0.12 + rnd() * 0.4, r = 0.5 + rnd() * 0.9;
+        if (Math.hypot(x - this.cx, y - this.cy) < this.R * 1.1) continue;
+        c.globalAlpha = a; c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill();
+      }
+      c.globalAlpha = 1;
+      const halo = c.createRadialGradient(this.cx, this.cy, this.R * 0.98, this.cx, this.cy, this.R * 1.12);
+      halo.addColorStop(0, 'rgba(255,255,255,0.22)'); halo.addColorStop(1, 'rgba(255,255,255,0)');
+      c.fillStyle = halo; c.beginPath(); c.arc(this.cx, this.cy, this.R * 1.12, 0, Math.PI * 2); c.arc(this.cx, this.cy, this.R, 0, Math.PI * 2, true); c.fill();
+      c.strokeStyle = 'rgba(255,255,255,0.10)'; c.lineWidth = 1;
+      const line = pts => { c.beginPath(); let on = false; for (const [lo, la] of pts) { const [x, y, v] = this.proj(lo, la); if (v > 0) { if (on) c.lineTo(x, y); else c.moveTo(x, y); on = true; } else on = false; } c.stroke(); };
+      for (let lon = -180; lon < 180; lon += 30) { const pts = []; for (let la = -90; la <= 90; la += 3) pts.push([lon, la]); line(pts); }
+      for (let lat = -60; lat <= 60; lat += 30) { const pts = []; for (let lo = -180; lo <= 180; lo += 3) pts.push([lo, lat]); line(pts); }
+    } else if (this.frame.classList.contains('no-image')) {
       c.strokeStyle = 'rgba(255,255,255,0.14)'; c.lineWidth = 1;
-      for (let lon = -180; lon <= 180; lon += 30) { const [x] = this.toXY(lon, 0); c.beginPath(); c.moveTo(x, 0); c.lineTo(x, this.h); c.stroke(); }
-      for (let lat = -90; lat <= 90; lat += 30) { const [, y] = this.toXY(0, lat); c.beginPath(); c.moveTo(0, y); c.lineTo(this.w, y); c.stroke(); }
+      for (let lon = -180; lon <= 180; lon += 30) { const [x] = this.proj(lon, 0); c.beginPath(); c.moveTo(x, 0); c.lineTo(x, this.h); c.stroke(); }
+      for (let lat = -90; lat <= 90; lat += 30) { const [, y] = this.proj(0, lat); c.beginPath(); c.moveTo(0, y); c.lineTo(this.w, y); c.stroke(); }
     }
     if (!this.points) return;
-    // Glow size follows the map width, so small phone screens do not turn fires into one blob.
-    const scale = Math.max(0.4, Math.min(1.2, this.w / 1024));
+    // Glow size follows the map size, so small phone screens do not turn fires into one blob.
+    const scale = Math.max(0.4, Math.min(1.2, (globe ? this.R * 2.4 : this.w) / 1024));
     c.globalCompositeOperation = 'lighter';
     for (const p of this.points) {
-      const [x, y] = this.toXY(p[0], p[1]);
-      const r = (1.1 + 2.8 * p[2]) * scale;
-      const g = c.createRadialGradient(x, y, 0, x, y, r * 2.2);
-      g.addColorStop(0, p[2] > 0.66 ? 'rgba(255,255,255,0.95)' : 'rgba(235,235,235,0.85)');
-      g.addColorStop(0.35, 'rgba(255,255,255,0.45)');
-      g.addColorStop(1, 'rgba(255,255,255,0)');
-      c.fillStyle = g; c.beginPath(); c.arc(x, y, r * 2.2, 0, Math.PI * 2); c.fill();
+      const [x, y, v] = this.proj(p[0], p[1]);
+      if (v <= 0.02) continue;
+      const r = (1.1 + 2.8 * p[2]) * scale * 2.2 * (globe ? 0.55 + 0.45 * v : 1);
+      c.globalAlpha = globe ? Math.min(1, 0.35 + v) : 1;
+      c.drawImage(this.sprites[p[2] > 0.66 ? 1 : 0], x - r, y - r, r * 2, r * 2);
     }
+    c.globalAlpha = 1;
     c.globalCompositeOperation = 'source-over';
+  };
+
+  MapView.prototype.tick = function (t, dt) {
+    if (this.view === 'globe') {
+      let moved = false;
+      if (this.target) {
+        const dl = wrap(this.target[0] - this.lon0), dp = this.target[1] - this.lat0;
+        if (Math.abs(dl) < 0.3 && Math.abs(dp) < 0.3) { this.lon0 = this.target[0]; this.lat0 = this.target[1]; this.target = null; }
+        else { const f = Math.min(1, dt / 160); this.lon0 = wrap(this.lon0 + dl * f); this.lat0 += dp * f; }
+        moved = true;
+      } else if (this.autoSpin && !EBE.a11y.reducedMotion() && t - this.lastTouch > 4000) {
+        this.lon0 = wrap(this.lon0 - SPIN_DEG_S * dt / 1000); moved = true;   // the Earth turns west to east
+      }
+      if (moved) { this.globeDirty = true; }
+      if (this.texDirty) this.loadTexture();
+      if (this.globeDirty && t - this.lastGlobe > 30) { this.lastGlobe = t; this.renderGlobe(); this.renderLayer(); }
+    }
+    this.draw();
   };
 
   MapView.prototype.draw = function () {
@@ -285,23 +545,41 @@
     const now = performance.now();
     this.flashes = this.flashes.filter(f => now - f.t < 700);
     for (const f of this.flashes) {
-      const age = (now - f.t) / 700, [x, y] = this.toXY(f.lon, f.lat);
+      const [x, y, v] = this.proj(f.lon, f.lat);
+      if (v <= 0.02) continue;
+      const age = (now - f.t) / 700;
       c.strokeStyle = 'rgba(255,255,255,' + (0.8 * (1 - age)).toFixed(3) + ')';
       c.lineWidth = 1.5;
       c.beginPath(); c.arc(x, y, 3 + 14 * age * (0.5 + f.i), 0, Math.PI * 2); c.stroke();
     }
     if (this.cursor.show) {
-      const [x, y] = this.toXY(this.cursor.lon, this.cursor.lat);
-      if (this.cursor.radiusKm) {
-        const ry = this.cursor.radiusKm / 111 / 180 * this.h;
-        const rx = ry / Math.max(0.2, Math.cos(this.cursor.lat * RAD));
-        c.strokeStyle = 'rgba(255,255,255,0.55)'; c.setLineDash([4, 4]); c.lineWidth = 1;
-        c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); c.stroke(); c.setLineDash([]);
+      const cu = this.cursor, [x, y, v] = this.proj(cu.lon, cu.lat);
+      if (v > 0) {
+        if (cu.radiusKm) {
+          c.strokeStyle = 'rgba(255,255,255,0.55)'; c.setLineDash([4, 4]); c.lineWidth = 1;
+          if (this.view === 'globe') {
+            // A circle on the ground, drawn point by point so it bends with the sphere.
+            const d = cu.radiusKm / 6371, p1 = cu.lat * RAD, l1 = cu.lon * RAD;
+            c.beginPath(); let on = false;
+            for (let a = 0; a <= 360; a += 10) {
+              const th = a * RAD, p2 = Math.asin(Math.sin(p1) * Math.cos(d) + Math.cos(p1) * Math.sin(d) * Math.cos(th));
+              const l2 = l1 + Math.atan2(Math.sin(th) * Math.sin(d) * Math.cos(p1), Math.cos(d) - Math.sin(p1) * Math.sin(p2));
+              const [px, py, pv] = this.proj(l2 * DEG, p2 * DEG);
+              if (pv > 0) { if (on) c.lineTo(px, py); else c.moveTo(px, py); on = true; } else on = false;
+            }
+            c.stroke();
+          } else {
+            const ry = cu.radiusKm / 111 / 180 * this.h;
+            const rx = ry / Math.max(0.2, Math.cos(cu.lat * RAD));
+            c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); c.stroke();
+          }
+          c.setLineDash([]);
+        }
+        c.strokeStyle = '#ffffff'; c.lineWidth = 2;
+        c.beginPath(); c.arc(x, y, 9, 0, Math.PI * 2); c.stroke();
+        c.beginPath(); c.moveTo(x - 15, y); c.lineTo(x - 5, y); c.moveTo(x + 5, y); c.lineTo(x + 15, y);
+        c.moveTo(x, y - 15); c.lineTo(x, y - 5); c.moveTo(x, y + 5); c.lineTo(x, y + 15); c.stroke();
       }
-      c.strokeStyle = '#ffffff'; c.lineWidth = 2;
-      c.beginPath(); c.arc(x, y, 9, 0, Math.PI * 2); c.stroke();
-      c.beginPath(); c.moveTo(x - 15, y); c.lineTo(x - 5, y); c.moveTo(x + 5, y); c.lineTo(x + 15, y);
-      c.moveTo(x, y - 15); c.lineTo(x, y - 5); c.moveTo(x, y + 5); c.lineTo(x, y + 15); c.stroke();
     }
   };
 

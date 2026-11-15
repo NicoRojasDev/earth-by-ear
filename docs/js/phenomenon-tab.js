@@ -18,12 +18,19 @@
     return 'level.veryHigh';
   }
 
+  // Globe or flat map: one choice for every topic, remembered on this device. Blind mode always uses
+  // the flat map, which keeps the whole world under the finger.
+  let viewPref = 'globe';
+  try { viewPref = localStorage.getItem('ebe.view') || 'globe'; } catch (e) { /* ignore */ }
+  const instances = [];
+
   function PhenomenonTab(cfg, panel) {
     this.cfg = cfg; this.id = cfg.id; this.panel = panel;
     this.ds = null; this.k = 0; this.mode = 'listen'; this.playing = false; this.speed = 1;
     this.cursor = { lon: -63.5, lat: -27.8 };
     this.near = null; this.lastReadout = 0;
     this.inst = null; this.built = false; this.active = false;
+    instances.push(this);
   }
   const P = PhenomenonTab.prototype;
 
@@ -38,10 +45,21 @@
       <p class="status" data-el="status" role="status"></p>
       <div class="ph-grid">
         <div class="ph-main">
+          <div class="viewbar">
+            <div class="seg" role="group" data-i18n-aria="view.label">
+              <button type="button" class="btn seg-btn" data-el="vGlobe" aria-pressed="false">${EBE.icon('globe')} <span data-i18n="view.globe"></span></button>
+              <button type="button" class="btn seg-btn" data-el="vFlat" aria-pressed="false">${EBE.icon('map')} <span data-i18n="view.flat"></span></button>
+            </div>
+            <div class="turns">
+              <button type="button" class="btn icon" data-el="turnW" data-i18n-aria="view.turnW">${EBE.icon('turn-w')}</button>
+              <button type="button" class="btn icon" data-el="turnE" data-i18n-aria="view.turnE">${EBE.icon('turn-e')}</button>
+            </div>
+          </div>
           <figure class="map-figure">
             <div class="map-wrap" data-el="map" tabindex="0" role="application" data-i18n-aria="common.mapLabel"></div>
             <figcaption class="sr-only" data-el="alt"></figcaption>
           </figure>
+          <p class="globe-hint" data-i18n="view.hint"></p>
           <div class="blind-bar">
             <button type="button" class="btn big" data-el="bWhere">${EBE.icon('replay')} <span data-i18n="blind.where"></span></button>
             <button type="button" class="btn big" data-el="bDetails">${EBE.icon('info')} <span data-i18n="details.btn"></span></button>
@@ -56,25 +74,28 @@
               <button type="button" class="btn big speed-btn" data-el="bSpeed">${EBE.icon('speed')} <span data-el="bSpeedLabel"></span></button>
             </div>
           </div>
-          <div class="timeline" role="group" data-i18n-aria="common.timeline">
-            <button type="button" class="btn icon" data-el="prev" data-i18n-aria="common.prev">${EBE.icon('prev')}</button>
-            <button type="button" class="btn icon primary" data-el="play"><span data-el="playIcon">${EBE.icon('play')}</span></button>
-            <button type="button" class="btn icon" data-el="next" data-i18n-aria="common.next">${EBE.icon('next')}</button>
-            <input type="range" class="slider" data-el="slider" min="0" max="0" value="0" step="1" data-i18n-aria="common.timeline">
-            <label class="speed"><span data-i18n="common.speed"></span>
-              <select data-el="speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select>
-            </label>
-            <output class="date" data-el="date"></output>
-          </div>
-          <div class="modes" role="group" data-i18n-aria="common.mode">
-            <button type="button" class="btn mode" data-el="mListen" aria-pressed="true" data-i18n="common.listen"></button>
-            <button type="button" class="btn mode" data-el="mExplore" aria-pressed="false" data-i18n="common.explore"></button>
-          </div>
-          <p class="help" data-el="help"></p>
-          <p class="readout" data-el="readout" aria-live="polite"></p>
-          <p class="keys" data-i18n="common.keys"></p>
         </div>
         <div class="ph-side">
+          <div class="ph-controls">
+            <div class="timeline" role="group" data-i18n-aria="common.timeline">
+              <button type="button" class="btn icon" data-el="prev" data-i18n-aria="common.prev">${EBE.icon('prev')}</button>
+              <button type="button" class="btn icon primary" data-el="play"><span data-el="playIcon">${EBE.icon('play')}</span></button>
+              <button type="button" class="btn icon" data-el="next" data-i18n-aria="common.next">${EBE.icon('next')}</button>
+              <input type="range" class="slider" data-el="slider" min="0" max="0" value="0" step="1" data-i18n-aria="common.timeline">
+              <label class="speed"><span data-i18n="common.speed"></span>
+                <select data-el="speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select>
+              </label>
+              <output class="date" data-el="date"></output>
+            </div>
+            <div class="modes" role="group" data-i18n-aria="common.mode">
+              <button type="button" class="btn mode" data-el="mListen" aria-pressed="true" data-i18n="common.listen"></button>
+              <button type="button" class="btn mode" data-el="mExplore" aria-pressed="false" data-i18n="common.explore"></button>
+            </div>
+            <p class="help" data-el="help"></p>
+            <p class="readout" data-el="readout" aria-live="polite"></p>
+            <p class="keys" data-i18n="common.keys"></p>
+          </div>
+          <div class="ph-data">
           <h3 data-i18n="common.data"></h3>
           <dl class="stats" data-el="stats"></dl>
           <p class="level" data-el="level"></p>
@@ -93,6 +114,7 @@
             </table>
           </details>
           <p class="credit"><span data-i18n="common.source"></span>: <span data-i18n="${id}.credit"></span></p>
+          </div>
         </div>
       </div>`;
     this.el = {};
@@ -102,6 +124,8 @@
       onPointer: (lon, lat) => this.moveCursor(lon, lat, true),
       onPointerEnd: () => this.onPointerEnd()
     });
+    this.applyView();
+    this.map.setAutoSpin(this.mode === 'listen');
     this.bind();
     EBE.i18n.apply(this.panel);
     this.built = true;
@@ -119,6 +143,10 @@
     el.bPlay.addEventListener('click', () => { this.playing ? this.pause() : this.play(); });
     el.bWhere.addEventListener('click', () => this.describe());
     el.bDetails.addEventListener('click', () => this.details());
+    el.vGlobe.addEventListener('click', () => setViewPref('globe'));
+    el.vFlat.addEventListener('click', () => setViewPref('flat'));
+    el.turnW.addEventListener('click', () => this.map.turn(-40));
+    el.turnE.addEventListener('click', () => this.map.turn(40));
     this.bindPad();
     this.panel.addEventListener('keydown', e => this.onKey(e));
   };
@@ -164,6 +192,7 @@
     if (!this.built) this.build();
     this.active = true;
     this.updateSpeedLabel();
+    this.applyView();
     if (this.ds) { this.blindExplore(); this.render(); this.startScene(); return; }
     this.el.status.textContent = t('common.loading');
     EBE.data.load(this.id).then(ds => {
@@ -174,7 +203,7 @@
       this.k = ds.frames.length - 1;   // start on the most recent frame
       if (this.active) this.blindExplore();
       this.render();
-      if (this.active) this.startScene();
+      if (this.active) { this.startScene(); if (EBE.relayout) EBE.relayout(); }
     }).catch(err => {
       console.error(err);
       if (!this.ds) this.el.status.textContent = t('common.loadError');
@@ -255,6 +284,7 @@
     this.el.mListen.setAttribute('aria-pressed', mode === 'listen' ? 'true' : 'false');
     this.el.mExplore.setAttribute('aria-pressed', mode === 'explore' ? 'true' : 'false');
     this.map.setInteractive(mode === 'explore');
+    this.map.setAutoSpin(mode === 'listen');
     if (mode === 'explore') this.updateNear();
     this.render();
     if (quiet) { this.startScene(); return; }
@@ -338,6 +368,23 @@
     else el.readout.textContent = '';
   };
 
+  // ---------- Globe or flat map ----------
+  function setViewPref(v) {
+    viewPref = v === 'flat' ? 'flat' : 'globe';
+    try { localStorage.setItem('ebe.view', viewPref); } catch (e) { /* ignore */ }
+    instances.forEach(x => x.applyView());
+    EBE.a11y.announce(t(viewPref === 'globe' ? 'view.globeOn' : 'view.flatOn'));
+  }
+  P.applyView = function () {
+    if (!this.built) return;
+    const v = EBE.a11y.isBlind() ? 'flat' : viewPref;
+    this.map.setView(v);
+    this.panel.classList.toggle('is-globe', v === 'globe');
+    this.el.vGlobe.setAttribute('aria-pressed', v === 'globe' ? 'true' : 'false');
+    this.el.vFlat.setAttribute('aria-pressed', v === 'flat' ? 'true' : 'false');
+    if (this.active && EBE.relayout) EBE.relayout();
+  };
+
   // ---------- Cursor pad (big screens, blind mode) ----------
   // On a museum wall the map is too big to sweep with one hand, so four arrows move the cursor.
   // A tap moves one step; holding an arrow keeps moving at the chosen speed. On release the voice
@@ -394,7 +441,7 @@
     EBE.audio.autoEnable();
     let lo = lon; if (lo > 180) lo -= 360; if (lo < -180) lo += 360;
     this.cursor = { lon: lo, lat: clamp(lat, -89, 89) };
-    this.map.setCursor(this.cursor.lon, this.cursor.lat, true, this.ds && this.ds.type === 'points' ? EBE.config.sound.exploreRadiusKm : 0);
+    this.map.setCursor(this.cursor.lon, this.cursor.lat, true, this.ds && this.ds.type === 'points' ? EBE.config.sound.exploreRadiusKm : 0, !fromPointer);
     this.updateNear();
     this.updateReadout(!fromPointer);
     if (EBE.a11y.isBlind()) this.sayRegion();
