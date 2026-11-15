@@ -13,7 +13,7 @@
 
 | # | Segundos | Qué grabar | Audio |
 |---|---|---|---|
-| 1 | 0–4 | Las 3 personas frente a cámara, y encima el título "Earth by Ear: touchable sound in everyone's pocket" | Voz (ES o EN) |
+| 1 | 0–4 | Las 3 personas frente a cámara, y encima el título "Earth by Ear: touch the giant screen, hear the planet" | Voz (ES o EN) |
 | 2 | 4–9 | Captura de pantalla de la pestaña Fires en modo Listen; en el editor, bajar el brillo hasta negro | Voz |
 | 3 | 9–15 | Persona adulta con los ojos vendados (o los ojos cerrados) pasando el dedo por el mapa en **Explore**, desde el Atlántico hacia Santiago del Estero: el sonar se acelera | **Sonido real de la app** (grabar con la salida del celular, no con el micrófono si se puede) |
 | 4 | 15–19 | Tres cortes de 1 s: Ocean Heat, Rain & Snow, Game | Sonido de la app |

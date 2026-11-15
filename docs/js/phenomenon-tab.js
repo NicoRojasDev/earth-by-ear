@@ -43,7 +43,7 @@
             <figcaption class="sr-only" data-el="alt"></figcaption>
           </figure>
           <div class="blind-bar">
-            <button type="button" class="btn big" data-el="bWhere">${EBE.icon('pin')} <span data-i18n="blind.where"></span></button>
+            <button type="button" class="btn big" data-el="bWhere">${EBE.icon('replay')} <span data-i18n="blind.where"></span></button>
             <button type="button" class="btn big" data-el="bDetails">${EBE.icon('info')} <span data-i18n="details.btn"></span></button>
             <button type="button" class="btn big wide" data-el="bPlay"><span data-el="bPlayIcon">${EBE.icon('play')}</span> <span data-el="bPlayLabel"></span></button>
           </div>

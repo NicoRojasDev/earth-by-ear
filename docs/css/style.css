@@ -219,3 +219,34 @@ body.blind .blind-toggles { display: grid; grid-column: 1 / -1; grid-template-co
 body.blind .blind-toggles .btn { min-height: 60px; flex-wrap: wrap; justify-content: flex-start; text-align: left; font-size: 1rem; }
 .blind-toggles .state { font-weight: 500; color: var(--muted); }
 .blind-toggles .btn[aria-pressed="false"] { background: var(--bg); border-style: dashed; color: var(--muted); }
+
+/* Welcome: turning Earth (screensaver) and QR code for visitors' phones */
+.welcome-hero { display: flex; align-items: center; gap: 16px; }
+.welcome-text { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.globe-wrap { flex: none; display: flex; flex-direction: column; align-items: center; gap: 6px; order: 2; margin-left: auto; }
+.globe { width: 120px; height: 120px; border-radius: 50%; box-shadow: 0 0 40px rgba(255, 255, 255, 0.10); }
+.globe-cap { margin: 0; font-size: 0.8rem; color: var(--muted); min-height: 1.2em; text-align: center; }
+.welcome-foot { display: flex; align-items: center; justify-content: center; gap: 24px; flex-wrap: wrap; }
+.qr-box { display: none; align-items: center; gap: 14px; }
+.qr { width: 112px; height: 112px; border-radius: 8px; }
+.qr-title { margin: 0; font-weight: 600; }
+.qr-url { margin: 0; color: var(--muted); font-size: 0.9rem; }
+@media (min-width: 800px) {
+  .welcome-hero { gap: 40px; }
+  .globe-wrap { order: 0; margin-left: 0; }
+  .globe { width: min(30vh, 300px); height: min(30vh, 300px); }
+  .qr-box { display: flex; }
+  .welcome-foot { justify-content: space-between; }
+}
+
+/* Big screens (museum walls, TVs): use the whole width and bigger type */
+@media (min-width: 1600px) {
+  :root { font-size: 19px; }
+  body { max-width: none; padding: 0 48px 40px; }
+  .ph-grid { grid-template-columns: minmax(0, 3fr) minmax(340px, 1fr); }
+  .globe { width: min(38vh, 460px); height: min(38vh, 460px); }
+  .qr { width: 150px; height: 150px; }
+  .welcome-choices { min-height: 300px; }
+}
+@media (min-width: 2400px) { :root { font-size: 24px; } }
+body.choosing { padding-bottom: 0; }   /* the welcome screen fits the screen exactly */

@@ -184,6 +184,26 @@
     try { last = localStorage.getItem('ebe.mode'); } catch (e) { /* ignore */ }
     const btn = last && document.querySelector('.choice-big[data-mode="' + last + '"]');
     (btn || $('#welcome-title')).focus();
+    if (EBE.globe) EBE.globe.start();
+  }
+
+  // Kiosk mode for museum screens (open the page with ?kiosk=1): after 5 minutes without anyone touching
+  // the screen, it goes back to the welcome screen with the turning Earth, ready for the next visitor.
+  function startKiosk() {
+    const IDLE_MS = 300000;
+    let timer = 0;
+    const busy = () => current && current.controller._state && current.controller._state().playing;
+    const arm = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        if (document.body.classList.contains('choosing')) return;
+        if (busy()) { arm(); return; }       // never cut the Audio Tour in the middle
+        showWelcome();
+      }, IDLE_MS);
+    };
+    ['pointerdown', 'pointermove', 'keydown', 'wheel', 'touchstart'].forEach(ev => window.addEventListener(ev, arm, { passive: true }));
+    document.body.classList.add('kiosk');
+    arm();
   }
 
   function chooseMode(mode) {
@@ -193,6 +213,7 @@
     document.body.classList.toggle('blind', blind);
     document.body.classList.remove('choosing');
     $('#welcome').hidden = true; $('#main').hidden = false;
+    if (EBE.globe) EBE.globe.stop();
     // The choice is a tap, so sound (and speech on iPhone) can start now.
     EBE.audio.mute(false);
     if (!EBE.audio.isOn()) EBE.audio.enable();
@@ -273,6 +294,7 @@
     const fromHash = location.hash.replace('#', '');
     select(tabs.some(x => x.id === fromHash) ? fromHash : tabs[0].id, false);
     showWelcome();
+    if (new URLSearchParams(location.search).has('kiosk')) startKiosk();
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
