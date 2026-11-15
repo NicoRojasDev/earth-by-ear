@@ -6,6 +6,8 @@
 
 Earth by Ear
 
+Team: **Moroncitos** (Nicolás Rojas, Juan Sayago, Lucas Orellana), data scientists. Challenge: *The Earth Information Jukebox*.
+
 ## 2. High-level summary (186 words, limit 50–200)
 
 Earth by Ear turns NASA's Earth Information Center (EIC) visualizations into live, touchable sound, built first for the giant screens of museums and science centers, where the EIC already lives. Five EIC visuals (active fires, ocean heat, rain and snow, near-surface air temperature and air pollution) each get their own instrument, and every sound is computed from values read out of the real EIC frames with each visualization's own colorbar. Visitors turn a 3D globe wrapped in the real frames, point at any place and the room hears the planet; a simple blind and low-vision mode speaks everything aloud. A kiosk mode returns to a turning-Earth welcome screen between visitors, and a QR code opens the same app on any phone. In a listening test, 19 of 20 people named the phenomenon by ear (chance: 4 of 20), and our fire readings rise and fall with NASA FIRMS detections (rank correlation 0.93). Climate exhibits are mostly visual; Earth by Ear opens them to blind and low-vision people and to anyone who learns by listening, starting with the fires near our home in Santiago del Estero, Argentina.

@@ -7,7 +7,9 @@ Earth by Ear turns NASA's Earth Information Center (EIC) visualizations into liv
 **▶ Try it:** https://nicorojasdev.github.io/earth-by-ear/ (any phone, tablet, computer or giant screen; nothing to install; English and Spanish)
 **Museum kiosk:** https://nicorojasdev.github.io/earth-by-ear/?kiosk=1
 
-Built for the **NASA International Space Apps Challenge 2026**, challenge *The Earth Information Jukebox*, by a team of three Data Science and AI students from ITSE, Santiago del Estero, Argentina.
+Built for the **NASA International Space Apps Challenge 2026**, challenge ***The Earth Information Jukebox***, by team **Moroncitos**: **Nicolás Rojas, Juan Sayago and Lucas Orellana**, data scientists (Data Science and AI, ITSE, Santiago del Estero, Argentina).
+
+📄 **Informe en español (Spanish report):** [`pitch/informe-es.md`](pitch/informe-es.md)
 
 ![Earth by Ear on a big screen: the Fires globe in Explore mode](pitch/screenshots/globe-fires.jpg)
 
@@ -112,6 +114,18 @@ Credit: NASA's Scientific Visualization Studio.
 ## AI disclosure
 
 This project was built with the assistance of **Claude (Anthropic)** for writing code and documentation. Every code file starts with a one-line comment that says so. All sounds are synthesized live in the browser by our own code; no AI-generated audio, images or video are used.
+
+## Team
+
+**Moroncitos** · NASA Space Apps Challenge 2026 · *The Earth Information Jukebox*
+
+| Name | Role |
+|---|---|
+| Nicolás Rojas | Data scientist |
+| Juan Sayago | Data scientist |
+| Lucas Orellana | Data scientist |
+
+Data Science and AI students at ITSE, Santiago del Estero, Argentina.
 
 ## License
 
