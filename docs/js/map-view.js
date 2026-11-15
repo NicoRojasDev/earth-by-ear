@@ -180,6 +180,8 @@
     this.flashes = [];
     this.cursor = { lon: -63.5, lat: -27.8, show: false, radiusKm: 0 };
     this.interactive = false;
+    // Zoom: 1x, 2x or 4x. (x0, y0) is the top-left corner of the visible part, as a share of the whole map.
+    this.zoom = 1; this.x0 = 0; this.y0 = 0;
 
     const frame = document.createElement('div');
     frame.className = 'map';
@@ -200,13 +202,27 @@
       if (!this.interactive) return;
       const r = this.frame.getBoundingClientRect();
       const x = clamp(e.clientX - r.left, 0, r.width), y = clamp(e.clientY - r.top, 0, r.height);
-      const lon = x / r.width * 360 - 180, lat = 90 - y / r.height * 180;
+      const [lon, lat] = this.fromXY(x, y);
       if (this.opts.onPointer) this.opts.onPointer(lon, lat, e.type);
     };
-    frame.addEventListener('pointerdown', e => { if (this.interactive) { frame.setPointerCapture(e.pointerId); onPointer(e); } });
-    frame.addEventListener('pointermove', e => { if (this.interactive && (e.buttons || e.pointerType === 'mouse')) onPointer(e); });
+    // When zoomed in and not exploring, dragging the map moves it.
+    let drag = null;
+    frame.addEventListener('pointerdown', e => {
+      if (this.interactive) { frame.setPointerCapture(e.pointerId); onPointer(e); return; }
+      if (this.zoom > 1) { frame.setPointerCapture(e.pointerId); drag = { x: e.clientX, y: e.clientY, x0: this.x0, y0: this.y0 }; frame.classList.add('dragging'); }
+    });
+    frame.addEventListener('pointermove', e => {
+      if (this.interactive) { if (e.buttons || e.pointerType === 'mouse') onPointer(e); return; }
+      if (drag && e.buttons) {
+        const vw = 1 / this.zoom;
+        this.setView(drag.x0 - (e.clientX - drag.x) / this.w * vw + vw / 2, drag.y0 - (e.clientY - drag.y) / this.h * vw + vw / 2);
+      }
+    });
     // Lifting the finger (or releasing the mouse) after exploring.
-    const onEnd = () => { if (this.interactive && this.opts.onPointerEnd) this.opts.onPointerEnd(); };
+    const onEnd = () => {
+      if (drag) { drag = null; frame.classList.remove('dragging'); }
+      if (this.interactive && this.opts.onPointerEnd) this.opts.onPointerEnd();
+    };
     frame.addEventListener('pointerup', onEnd);
     frame.addEventListener('pointercancel', onEnd);
 
@@ -225,7 +241,41 @@
     this.renderLayer();
   };
 
-  MapView.prototype.toXY = function (lon, lat) { return [(lon + 180) / 360 * this.w, (90 - lat) / 180 * this.h]; };
+  MapView.prototype.toXY = function (lon, lat) {
+    const z = this.zoom;
+    return [((lon + 180) / 360 - this.x0) * z * this.w, ((90 - lat) / 180 - this.y0) * z * this.h];
+  };
+  MapView.prototype.fromXY = function (x, y) {
+    const z = this.zoom;
+    return [(x / (z * this.w) + this.x0) * 360 - 180, 90 - (y / (z * this.h) + this.y0) * 180];
+  };
+
+  // Centre the visible part on (cx, cy), given as shares of the whole map, without leaving the map.
+  MapView.prototype.setView = function (cx, cy) {
+    const vw = 1 / this.zoom;
+    this.x0 = clamp(cx - vw / 2, 0, 1 - vw);
+    this.y0 = clamp(cy - vw / 2, 0, 1 - vw);
+    this.img.style.transform = this.zoom === 1 ? '' :
+      'scale(' + this.zoom + ') translate(' + (-this.x0 * 100).toFixed(3) + '%, ' + (-this.y0 * 100).toFixed(3) + '%)';
+    this.frame.classList.toggle('zoomed', this.zoom > 1);
+    this.renderLayer();
+  };
+
+  // Zoom to 1, 2 or 4 times, centred on a place (lon, lat) or on the current centre.
+  MapView.prototype.setZoom = function (z, lon, lat) {
+    const vw = 1 / this.zoom;
+    let cx = this.x0 + vw / 2, cy = this.y0 + vw / 2;
+    if (lon != null) { cx = (lon + 180) / 360; cy = (90 - lat) / 180; }
+    this.zoom = z === 4 ? 4 : z === 2 ? 2 : 1;
+    this.setView(cx, cy);
+  };
+
+  // Keep a place on screen (used when the cursor moves with the keyboard while zoomed in).
+  MapView.prototype.keepVisible = function (lon, lat) {
+    if (this.zoom === 1) return;
+    const u = (lon + 180) / 360, v = (90 - lat) / 180, vw = 1 / this.zoom, m = vw * 0.08;
+    if (u < this.x0 + m || u > this.x0 + vw - m || v < this.y0 + m || v > this.y0 + vw - m) this.setView(u, v);
+  };
 
   MapView.prototype.setImage = function (src, alt) {
     if (src) { this.frame.classList.remove('no-image'); if (this.img.getAttribute('src') !== src) this.img.src = src; }
@@ -248,6 +298,7 @@
 
   MapView.prototype.setCursor = function (lon, lat, show, radiusKm) {
     this.cursor = { lon, lat, show: !!show, radiusKm: radiusKm || 0 };
+    if (show) this.keepVisible(lon, lat);
   };
 
   // Static layer: graticule when there is no image, then the point glows.
@@ -262,10 +313,12 @@
     }
     if (!this.points) return;
     // Glow size follows the map width, so small phone screens do not turn fires into one blob.
-    const scale = Math.max(0.4, Math.min(1.2, this.w / 1024));
+    // When zoomed in, the glows grow a little so they are easier to aim at.
+    const scale = Math.max(0.4, Math.min(1.2, this.w / 1024)) * Math.sqrt(this.zoom);
     c.globalCompositeOperation = 'lighter';
     for (const p of this.points) {
       const [x, y] = this.toXY(p[0], p[1]);
+      if (x < -40 || y < -40 || x > this.w + 40 || y > this.h + 40) continue;
       const r = (1.1 + 2.8 * p[2]) * scale;
       const g = c.createRadialGradient(x, y, 0, x, y, r * 2.2);
       g.addColorStop(0, p[2] > 0.66 ? 'rgba(255,255,255,0.95)' : 'rgba(235,235,235,0.85)');
@@ -293,7 +346,7 @@
     if (this.cursor.show) {
       const [x, y] = this.toXY(this.cursor.lon, this.cursor.lat);
       if (this.cursor.radiusKm) {
-        const ry = this.cursor.radiusKm / 111 / 180 * this.h;
+        const ry = this.cursor.radiusKm / 111 / 180 * this.h * this.zoom;
         const rx = ry / Math.max(0.2, Math.cos(this.cursor.lat * RAD));
         c.strokeStyle = 'rgba(255,255,255,0.55)'; c.setLineDash([4, 4]); c.lineWidth = 1;
         c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); c.stroke(); c.setLineDash([]);

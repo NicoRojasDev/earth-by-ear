@@ -251,6 +251,7 @@
     if (!EBE.audio.isOn()) EBE.audio.enable();
     setVoice(blind);
     updateModeButton(); updateSoundButton();
+    tabs.forEach(tb => { if (tb.controller && tb.controller.resetZoom) tb.controller.resetZoom(); });
     select(current ? current.id : tabs[0].id, false);
     (blind ? $('#tb-name') : current.button).focus();
     if (blind) showHelp();

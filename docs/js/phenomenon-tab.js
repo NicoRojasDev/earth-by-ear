@@ -42,6 +42,12 @@
             <div class="map-wrap" data-el="map" tabindex="0" role="application" data-i18n-aria="common.mapLabel"></div>
             <figcaption class="sr-only" data-el="alt"></figcaption>
           </figure>
+          <div class="zoom-bar" role="group" data-i18n-aria="zoom.label">
+            <button type="button" class="btn icon" data-el="zOut" data-i18n-aria="zoom.out" disabled>${EBE.icon('zoom-out')}</button>
+            <output class="zoom-level" data-el="zLevel" aria-live="polite">1×</output>
+            <button type="button" class="btn icon" data-el="zIn" data-i18n-aria="zoom.in">${EBE.icon('zoom-in')}</button>
+            <p class="zoom-note" data-i18n="zoom.note"></p>
+          </div>
           <div class="blind-bar">
             <button type="button" class="btn big" data-el="bWhere">${EBE.icon('replay')} <span data-i18n="blind.where"></span></button>
             <button type="button" class="btn big" data-el="bDetails">${EBE.icon('info')} <span data-i18n="details.btn"></span></button>
@@ -110,6 +116,8 @@
     el.bPlay.addEventListener('click', () => { this.playing ? this.pause() : this.play(); });
     el.bWhere.addEventListener('click', () => this.describe());
     el.bDetails.addEventListener('click', () => this.details());
+    el.zIn.addEventListener('click', () => this.zoomBy(2));
+    el.zOut.addEventListener('click', () => this.zoomBy(0.5));
     this.panel.addEventListener('keydown', e => this.onKey(e));
   };
 
@@ -127,6 +135,10 @@
         e.preventDefault(); this.describe(); break;
       case 'd': case 'D':
         e.preventDefault(); this.details(); break;
+      case '+': case '=':
+        e.preventDefault(); this.zoomBy(2); break;
+      case '-': case '_':
+        e.preventDefault(); this.zoomBy(0.5); break;
       case 'm': case 'M':
         e.preventDefault(); this.setMode(this.mode === 'listen' ? 'explore' : 'listen'); break;
       case 'ArrowLeft':
@@ -324,6 +336,28 @@
     if (next.image) { const im = new Image(); im.src = next.image; }
     if (this.mode === 'explore') this.updateReadout(true);
     else el.readout.textContent = '';
+  };
+
+  // ---------- Zoom ----------
+  // 1x, 2x, 4x. Zooming in centres on the place being explored (by default Santiago del Estero);
+  // when not exploring, the map can then be dragged. The data cells are 2 degrees (about 220 km),
+  // so zoom helps to aim, it does not add detail.
+  P.zoomBy = function (f) {
+    const m = this.map, z = Math.max(1, Math.min(4, m.zoom * f));
+    if (z === m.zoom) return;
+    const onCursor = f > 1 && (m.zoom === 1 || this.mode === 'explore');
+    if (onCursor) m.setZoom(z, this.cursor.lon, this.cursor.lat); else m.setZoom(z);
+    this.updateZoomButtons();
+  };
+  P.resetZoom = function () {
+    if (!this.built || this.map.zoom === 1) return;
+    this.map.setZoom(1); this.updateZoomButtons();
+  };
+  P.updateZoomButtons = function () {
+    const z = this.map.zoom;
+    this.el.zLevel.textContent = z + '×';
+    this.el.zOut.disabled = z === 1;
+    this.el.zIn.disabled = z === 4;
   };
 
   // ---------- Explore ----------
