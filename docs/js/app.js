@@ -78,6 +78,7 @@
     if (focusTab && EBE.a11y.isBlind()) sayTopic(tab);
     $('#tb-name').textContent = t('tab.' + tab.id);
     if (location.hash !== '#' + tab.id) history.replaceState(null, '', '#' + tab.id);
+    placeBlindBar();
   }
 
   function onTabKey(e) {
@@ -139,7 +140,7 @@
   // Blind mode instructions: a screen of its own, read aloud, with a big Start button.
   function helpKeys() {
     const big = DOCK_MQ.matches;
-    return ['help.s1' + (big ? 'Dock' : ''), 'help.s2', 'help.s3', 'help.s4', 'help.s5', 'help.s6' + (big ? 'Dock' : '')];
+    return ['help.s1' + (big ? 'Dock' : ''), 'help.s2', 'help.s3', 'help.s4' + (big ? 'Dock' : ''), 'help.s5', 'help.s6' + (big ? 'Dock' : '')];
   }
 
   function helpText() {
@@ -159,6 +160,7 @@
   function hideHelp() {
     document.body.classList.remove('helpopen');
     $('#blind-help').hidden = true;
+    fitBlindMap();
   }
 
   function startBlind() {
@@ -179,19 +181,50 @@
   const DOCK_MQ = window.matchMedia('(min-width: 1600px)');
   let docked = null;
   function placeDock() {
-    if (!docked) docked = ['.top .controls', '.blind-toggles', '#topicbar', '.tabbar'].map(sel => {
+    if (!docked) docked = ['#topicbar', '.blind-toggles', '.top .controls', '.tabbar'].map(sel => {
       const el = $(sel), mark = document.createComment('dock');
       el.parentNode.insertBefore(mark, el);
       return { el, mark };
     });
     const big = DOCK_MQ.matches, dock = $('#dock');
     docked.forEach(({ el, mark }) => { if (big) dock.appendChild(el); else mark.parentNode.insertBefore(el, mark.nextSibling); });
+    dock.appendChild($('#dock-bar'));
     document.body.classList.toggle('docked', big);
-    padForDock();
+    placeBlindBar();
   }
   function padForDock() {
     const dock = $('#dock');
     document.body.style.paddingBottom = DOCK_MQ.matches ? (dock.offsetHeight + 24) + 'px' : '';
+    fitBlindMap();
+  }
+
+  // Blind mode on a big screen: the topic's buttons (Repeat, Details, Listen over time, the cursor arrows
+  // and the speed) join the dock, so every control is at the bottom and the map fills the rest.
+  let movedBar = null;
+  function placeBlindBar() {
+    if (movedBar) { movedBar.mark.parentNode.insertBefore(movedBar.el, movedBar.mark); movedBar.mark.remove(); movedBar = null; }
+    const bar = current && current.panel.querySelector('.blind-bar');
+    if (DOCK_MQ.matches && EBE.a11y.isBlind() && bar) {
+      const mark = document.createComment('blind-bar');
+      bar.parentNode.insertBefore(mark, bar);
+      $('#dock-bar').appendChild(bar);
+      movedBar = { el: bar, mark };
+    }
+    padForDock();
+  }
+  // The map takes the space left above the dock, keeping the 2:1 shape of the world map, so the page
+  // never needs scrolling.
+  function fitBlindMap() {
+    document.querySelectorAll('.panel .map').forEach(m => { m.style.height = ''; m.parentNode.style.maxWidth = ''; });
+    if (!(DOCK_MQ.matches && EBE.a11y.isBlind() && current)) return;
+    const map = current.panel.querySelector('.map');
+    if (!map || current.panel.hidden || document.body.classList.contains('helpopen')) return;
+    const top = map.getBoundingClientRect().top + window.scrollY;
+    let h = Math.min(window.innerHeight - $('#dock').offsetHeight - top - 72, map.offsetWidth / 2);
+    map.style.height = Math.max(240, Math.round(h)) + 'px';
+    const over = document.documentElement.scrollHeight - window.innerHeight;
+    if (over > 0) { h -= over; map.style.height = Math.max(240, Math.round(h)) + 'px'; }
+    map.parentNode.style.maxWidth = Math.round(Math.max(240, h) * 2 + 2) + 'px';
   }
 
   function setVoice(on) {
@@ -251,7 +284,6 @@
     if (!EBE.audio.isOn()) EBE.audio.enable();
     setVoice(blind);
     updateModeButton(); updateSoundButton();
-    tabs.forEach(tb => { if (tb.controller && tb.controller.resetZoom) tb.controller.resetZoom(); });
     select(current ? current.id : tabs[0].id, false);
     (blind ? $('#tb-name') : current.button).focus();
     if (blind) showHelp();
@@ -274,6 +306,7 @@
     placeDock();
     if (DOCK_MQ.addEventListener) DOCK_MQ.addEventListener('change', placeDock);
     if (window.ResizeObserver) new ResizeObserver(padForDock).observe($('#dock'));
+    window.addEventListener('resize', fitBlindMap);
 
     $('#btn-sound').addEventListener('click', () => {
       if (EBE.audio.isOn()) { EBE.audio.disable(); EBE.audio.mute(true); }
@@ -319,6 +352,7 @@
     EBE.i18n.onChange(() => {
       updateLangButtons(); updateSoundButton(); updateModeButton();
       if (current) $('#tb-name').textContent = t('tab.' + current.id);
+      EBE.i18n.apply($('#dock-bar'));
       tabs.forEach(tab => {
         if (tab.controller.onLangChange) tab.controller.onLangChange();
         else if (tab.built) EBE.i18n.apply(tab.panel);

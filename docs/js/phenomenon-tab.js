@@ -42,16 +42,19 @@
             <div class="map-wrap" data-el="map" tabindex="0" role="application" data-i18n-aria="common.mapLabel"></div>
             <figcaption class="sr-only" data-el="alt"></figcaption>
           </figure>
-          <div class="zoom-bar" role="group" data-i18n-aria="zoom.label">
-            <button type="button" class="btn icon" data-el="zOut" data-i18n-aria="zoom.out" disabled>${EBE.icon('zoom-out')}</button>
-            <output class="zoom-level" data-el="zLevel" aria-live="polite">1×</output>
-            <button type="button" class="btn icon" data-el="zIn" data-i18n-aria="zoom.in">${EBE.icon('zoom-in')}</button>
-            <p class="zoom-note" data-i18n="zoom.note"></p>
-          </div>
           <div class="blind-bar">
             <button type="button" class="btn big" data-el="bWhere">${EBE.icon('replay')} <span data-i18n="blind.where"></span></button>
             <button type="button" class="btn big" data-el="bDetails">${EBE.icon('info')} <span data-i18n="details.btn"></span></button>
             <button type="button" class="btn big wide" data-el="bPlay"><span data-el="bPlayIcon">${EBE.icon('play')}</span> <span data-el="bPlayLabel"></span></button>
+            <div class="pad-area">
+              <div class="pad" role="group" data-i18n-aria="pad.label">
+                <button type="button" class="btn pad-btn pad-left" data-dir="left" data-i18n-aria="pad.left">${EBE.icon('left')}</button>
+                <button type="button" class="btn pad-btn pad-up" data-dir="up" data-i18n-aria="pad.up">${EBE.icon('up')}</button>
+                <button type="button" class="btn pad-btn pad-down" data-dir="down" data-i18n-aria="pad.down">${EBE.icon('down')}</button>
+                <button type="button" class="btn pad-btn pad-right" data-dir="right" data-i18n-aria="pad.right">${EBE.icon('right')}</button>
+              </div>
+              <button type="button" class="btn big speed-btn" data-el="bSpeed">${EBE.icon('speed')} <span data-el="bSpeedLabel"></span></button>
+            </div>
           </div>
           <div class="timeline" role="group" data-i18n-aria="common.timeline">
             <button type="button" class="btn icon" data-el="prev" data-i18n-aria="common.prev">${EBE.icon('prev')}</button>
@@ -116,8 +119,7 @@
     el.bPlay.addEventListener('click', () => { this.playing ? this.pause() : this.play(); });
     el.bWhere.addEventListener('click', () => this.describe());
     el.bDetails.addEventListener('click', () => this.details());
-    el.zIn.addEventListener('click', () => this.zoomBy(2));
-    el.zOut.addEventListener('click', () => this.zoomBy(0.5));
+    this.bindPad();
     this.panel.addEventListener('keydown', e => this.onKey(e));
   };
 
@@ -135,10 +137,6 @@
         e.preventDefault(); this.describe(); break;
       case 'd': case 'D':
         e.preventDefault(); this.details(); break;
-      case '+': case '=':
-        e.preventDefault(); this.zoomBy(2); break;
-      case '-': case '_':
-        e.preventDefault(); this.zoomBy(0.5); break;
       case 'm': case 'M':
         e.preventDefault(); this.setMode(this.mode === 'listen' ? 'explore' : 'listen'); break;
       case 'ArrowLeft':
@@ -165,6 +163,7 @@
   P.activate = function () {
     if (!this.built) this.build();
     this.active = true;
+    this.updateSpeedLabel();
     if (this.ds) { this.blindExplore(); this.render(); this.startScene(); return; }
     this.el.status.textContent = t('common.loading');
     EBE.data.load(this.id).then(ds => {
@@ -191,6 +190,7 @@
   P.onLangChange = function () {
     if (!this.built) return;
     EBE.i18n.apply(this.panel);
+    this.updateSpeedLabel();
     if (this.ds) this.render();
   };
 
@@ -338,26 +338,54 @@
     else el.readout.textContent = '';
   };
 
-  // ---------- Zoom ----------
-  // 1x, 2x, 4x. Zooming in centres on the place being explored (by default Santiago del Estero);
-  // when not exploring, the map can then be dragged. The data cells are 2 degrees (about 220 km),
-  // so zoom helps to aim, it does not add detail.
-  P.zoomBy = function (f) {
-    const m = this.map, z = Math.max(1, Math.min(4, m.zoom * f));
-    if (z === m.zoom) return;
-    const onCursor = f > 1 && (m.zoom === 1 || this.mode === 'explore');
-    if (onCursor) m.setZoom(z, this.cursor.lon, this.cursor.lat); else m.setZoom(z);
-    this.updateZoomButtons();
+  // ---------- Cursor pad (big screens, blind mode) ----------
+  // On a museum wall the map is too big to sweep with one hand, so four arrows move the cursor.
+  // A tap moves one step; holding an arrow keeps moving at the chosen speed. On release the voice
+  // says where the cursor is, as when lifting the finger from the map.
+  const PAD_SPEEDS = [{ key: 'slow', deg: 1 }, { key: 'normal', deg: 3 }, { key: 'fast', deg: 8 }];
+  const PAD_DIRS = { left: [-1, 0], right: [1, 0], up: [0, 1], down: [0, -1] };
+  let padSpeed = 1;                     // shared by every topic
+
+  P.bindPad = function () {
+    let delay = 0, timer = 0, held = false;
+    const step = dir => {
+      const d = PAD_DIRS[dir], s = PAD_SPEEDS[padSpeed].deg;
+      this.moveCursor(this.cursor.lon + d[0] * s, this.cursor.lat + d[1] * s, true);
+    };
+    const stop = () => {
+      if (!delay && !timer) return;
+      clearTimeout(delay); clearInterval(timer); delay = timer = 0;
+      this.panel.ownerDocument.querySelectorAll('.pad-btn.held').forEach(x => x.classList.remove('held'));
+      this.onPointerEnd();
+    };
+    this.panel.querySelectorAll('.pad-btn').forEach(b => {
+      b.addEventListener('pointerdown', e => {
+        if (e.button > 0) return;
+        e.preventDefault(); held = true;
+        try { b.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+        stop(); b.classList.add('held'); step(b.dataset.dir);
+        delay = setTimeout(() => { timer = setInterval(() => step(b.dataset.dir), 140); }, 380);
+      });
+      ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(ev => b.addEventListener(ev, stop));
+      // Keyboard, switch access and screen readers send a click without a pointer press: one step.
+      b.addEventListener('click', () => {
+        if (held) { held = false; return; }
+        step(b.dataset.dir); this.onPointerEnd();
+      });
+    });
+    this.el.bSpeed.addEventListener('click', () => {
+      padSpeed = (padSpeed + 1) % PAD_SPEEDS.length;
+      this.updateSpeedLabel();
+      const text = t('pad.speedSay', { speed: t('pad.' + PAD_SPEEDS[padSpeed].key) });
+      EBE.a11y.announce(text);
+      if (!EBE.a11y.readAloud()) EBE.a11y.speak(text);
+    });
+    this.updateSpeedLabel();
   };
-  P.resetZoom = function () {
-    if (!this.built || this.map.zoom === 1) return;
-    this.map.setZoom(1); this.updateZoomButtons();
-  };
-  P.updateZoomButtons = function () {
-    const z = this.map.zoom;
-    this.el.zLevel.textContent = z + '×';
-    this.el.zOut.disabled = z === 1;
-    this.el.zIn.disabled = z === 4;
+
+  P.updateSpeedLabel = function () {
+    if (!this.el || !this.el.bSpeedLabel) return;
+    this.el.bSpeedLabel.textContent = t('pad.speed', { speed: t('pad.' + PAD_SPEEDS[padSpeed].key) });
   };
 
   // ---------- Explore ----------

@@ -84,7 +84,7 @@ h3 { font-size: 1.1rem; color: var(--muted); }
 .map.interactive { touch-action: none; cursor: crosshair; }
 .map.no-image { background: radial-gradient(ellipse at center, #1c1c1c 0%, #0d0d0d 75%); }
 .map-img, .map-overlay { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-.map-img { object-fit: fill; transform-origin: 0 0; }
+.map-img { object-fit: fill; }
 .map.no-image .map-img { display: none; }
 .timeline { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 10px 0; }
 .slider { flex: 1 1 160px; min-height: 44px; accent-color: #e6e6e6; }
@@ -180,14 +180,16 @@ body.blind .ph-head, body.blind .lead, body.blind .timeline, body.blind .modes, 
 body.blind .ph-side { display: none; }
 body.blind .top { grid-template-columns: 1fr auto; padding: 8px 0 0; }
 body.blind .top h1 { font-size: 1.35rem; }
-body.blind .topicbar { display: grid; grid-template-columns: 76px 1fr 76px; gap: 8px; align-items: center; margin: 6px 0 10px; }
-body.blind .topicbar .btn { min-height: 76px; font-size: 1.9rem; padding: 0; }
+/* Button size follows the screen: about 9% of its height on phones and tablets (76 px on a phone). */
+body.blind { --bh: clamp(60px, 9vh, 88px); --bf: clamp(1.05rem, 2.1vh, 1.35rem); }
+body.blind .topicbar { display: grid; grid-template-columns: var(--bh) 1fr var(--bh); gap: 8px; align-items: center; margin: 6px 0 10px; }
+body.blind .topicbar .btn { min-height: var(--bh); font-size: 1.9rem; padding: 0; }
 body.blind .tb-name { margin: 0; text-align: center; font-size: 1.6rem; color: var(--text); }
 body.blind .tb-name:focus { outline: none; }
 body.blind .ph-grid { display: block; }
 body.blind .map { aspect-ratio: auto; height: 56vh; height: 56dvh; }
 body.blind .blind-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-body.blind .blind-bar .btn { min-height: 76px; font-size: 1.2rem; }
+body.blind .blind-bar .btn { min-height: var(--bh); font-size: var(--bf); }
 body.blind .blind-bar .btn.wide { grid-column: 1 / -1; }
 body.blind .readout { font-size: 1.15rem; min-height: 1.5em; }
 
@@ -216,7 +218,7 @@ body.helpopen .topicbar, body.helpopen #panels { display: none !important; }
 /* Blind mode: two separate switches, data sound and voice */
 .blind-toggles { display: none; }
 body.blind .blind-toggles { display: grid; grid-column: 1 / -1; grid-template-columns: 1fr 1fr; gap: 8px; }
-body.blind .blind-toggles .btn { min-height: 60px; flex-wrap: wrap; justify-content: flex-start; text-align: left; font-size: 1rem; }
+body.blind .blind-toggles .btn { min-height: calc(var(--bh) * 0.8); flex-wrap: wrap; justify-content: flex-start; text-align: left; font-size: 1rem; }
 .blind-toggles .state { font-weight: 500; color: var(--muted); }
 .blind-toggles .btn[aria-pressed="false"] { background: var(--bg); border-style: dashed; color: var(--muted); }
 
@@ -292,13 +294,42 @@ body.docked.blind .dock .controls .btn { min-height: 56px; }
 .choice:has(input:checked) input { accent-color: #0a0a0a; }
 .choice:focus-within { outline: 3px solid var(--focus); outline-offset: 2px; }
 
-/* Map zoom (1x, 2x, 4x). Hidden in blind mode, which keeps the whole world under the finger. */
-.map.zoomed { touch-action: none; cursor: grab; }
-.map.zoomed.interactive { cursor: crosshair; }
-.map.dragging { cursor: grabbing; }
-.zoom-bar { display: flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
-.zoom-bar .btn.icon { min-width: 48px; min-height: 48px; justify-content: center; }
-.zoom-bar .btn:disabled { opacity: 0.35; cursor: default; }
-.zoom-level { min-width: 2.6em; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
-.zoom-note { margin: 0; flex: 1 1 260px; color: var(--muted); font-size: 0.9rem; }
-body.blind .zoom-bar { display: none; }
+
+/* Blind mode on big screens: every control sits in the dock at the bottom, and the bigger the screen,
+   the smaller the buttons are compared with it, so the map gets the space.
+   Row 1: topic arrows, sound and voice switches, Mode and Help.
+   Row 2: Repeat, Details, Listen over time, the cursor arrows and the speed. */
+.dock-bar, .pad-area { display: none; }
+body.docked.blind { --bh: clamp(48px, 5.6vh, 84px); --bf: clamp(1rem, 1.5vh, 1.5rem); }
+body.docked.blind .dock {
+  display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1.6fr) auto;
+  grid-template-areas: "topic toggles controls" "bar bar bar";
+  align-items: stretch; gap: 10px 14px; padding: 10px 40px 14px;
+}
+body.docked.blind .dock #topicbar { grid-area: topic; margin: 0; }
+body.docked.blind .dock .tb-name { font-size: calc(var(--bf) * 1.25); }
+body.docked.blind .dock .blind-toggles { grid-area: toggles; }
+body.docked.blind .dock .blind-toggles .btn { min-height: var(--bh); font-size: var(--bf); }
+body.docked.blind .dock .controls { grid-area: controls; align-items: stretch; }
+body.docked.blind .dock .controls .btn { min-height: var(--bh); font-size: var(--bf); }
+body.docked.blind .dock .dock-bar { grid-area: bar; display: block; }
+body.helpopen .dock-bar { display: none !important; }
+body.docked.blind .dock .blind-bar {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.4fr) auto minmax(0, 1fr);
+  gap: 10px 14px; align-items: stretch; margin: 0;
+}
+body.docked.blind .dock .blind-bar .btn.wide { grid-column: auto; }
+body.docked.blind .pad-area { display: contents; }
+.pad { display: grid; grid-template-columns: repeat(3, calc(var(--bh) * 1.25)); grid-template-rows: repeat(2, calc(var(--bh) * 0.75)); gap: 6px; }
+body.blind .blind-bar .pad .btn { min-height: 0; padding: 0; justify-content: center; font-size: 1rem; }
+.pad .ic { width: 32px; height: 32px; }
+body.docked.blind .map-wrap { margin-inline: auto; }
+.pad-left { grid-column: 1; grid-row: 1 / 3; }
+.pad-up { grid-column: 2; grid-row: 1; }
+.pad-down { grid-column: 2; grid-row: 2; }
+.pad-right { grid-column: 3; grid-row: 1 / 3; }
+.pad .btn:active, .pad .btn.held { background: var(--text); color: var(--bg); }
+.speed-btn { justify-content: center; }
+body.docked.blind .readout { font-size: var(--bf); }
+/* The loading line would push the map down while a topic loads; on the big screen it is only for screen readers. */
+body.docked.blind .panel .status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; margin: 0; }
